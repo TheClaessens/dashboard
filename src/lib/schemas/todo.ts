@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const createTodoSchema = z.object({
   title: z.string().trim().min(1, "Title is required"),
-  listId: z.string().uuid().optional(),
+  listId: z.string().uuid().nullish(),
   dueDate: z.string().optional(),
 });
 

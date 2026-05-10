@@ -26,6 +26,11 @@ describe("createTodoSchema", () => {
     expect(result.success).toBe(true);
   });
 
+  it("accepts null listId (no list selected)", () => {
+    const result = createTodoSchema.safeParse({ title: "Task", listId: null });
+    expect(result.success).toBe(true);
+  });
+
   it("trims whitespace from title", () => {
     const result = createTodoSchema.safeParse({ title: "  Buy milk  " });
     expect(result.success).toBe(true);
