@@ -1,32 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import Link from "next/link";
-import { db } from "@/lib/db";
-import { todos } from "@/db/schema";
-import { isNull } from "drizzle-orm";
-import { sortByDueDate } from "@/lib/schemas/todo";
-import { getCalendarEvents } from "@/lib/google-calendar";
-import { getTodayEvents, formatEventTime } from "@/lib/schemas/calendar";
+import { formatEventTime } from "@/lib/schemas/calendar";
+import { getUpcomingTodos, getTodayCalendarEvents } from "@/app/page.utils";
 import type { Todo } from "@/lib/schemas/todo";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
-
-async function getUpcomingTodos(): Promise<Todo[]> {
-  const open = await db.select().from(todos).where(isNull(todos.completedAt));
-  return sortByDueDate(open).slice(0, 3);
-}
-
-async function getTodayCalendarEvents(): Promise<CalendarEvent[]> {
-  try {
-    const start = new Date();
-    start.setHours(0, 0, 0, 0);
-    const end = new Date();
-    end.setHours(23, 59, 59, 999);
-    const events = await getCalendarEvents(start, end);
-    return getTodayEvents(events);
-  } catch {
-    return [];
-  }
-}
 
 function TodosWidget({ items }: { items: Todo[] }) {
   return (

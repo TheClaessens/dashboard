@@ -1,30 +1,10 @@
 "use client";
 
 import { useMemo } from "react";
-import { useCalendarEvents } from "./hooks/useCalendarEvents";
+import { useCalendarEvents } from "@/app/calendar/hooks/useCalendarEvents";
 import { getWeekEvents, formatEventTime } from "@/lib/schemas/calendar";
+import { deriveWeekStart, deriveWeekDays, eventStartDate } from "@/app/calendar/page.utils";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
-
-function getWeekStart(): Date {
-  const d = new Date();
-  d.setHours(0, 0, 0, 0);
-  const dayOfWeek = d.getDay() || 7; // Sunday=0 → 7, keeps Mon-first convention
-  d.setDate(d.getDate() - dayOfWeek + 1);
-  return d;
-}
-
-function getWeekDays(weekStart: Date): Date[] {
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(weekStart);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
-}
-
-function getEventStartDate(event: CalendarEvent): string {
-  if ("date" in event.start) return event.start.date;
-  return new Date(event.start.dateTime).toLocaleDateString("en-CA");
-}
 
 function DayColumn({ day, events }: { day: Date; events: CalendarEvent[] }) {
   const label = day.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
@@ -61,7 +41,7 @@ function LoadingState() {
 }
 
 export default function CalendarPage() {
-  const weekStart = useMemo(getWeekStart, []);
+  const weekStart = useMemo(deriveWeekStart, []);
   const weekEnd = useMemo(() => {
     const d = new Date(weekStart);
     d.setDate(d.getDate() + 7);
@@ -69,7 +49,7 @@ export default function CalendarPage() {
   }, [weekStart]);
 
   const { data: allEvents = [], isLoading } = useCalendarEvents(weekStart, weekEnd);
-  const days = useMemo(() => getWeekDays(weekStart), [weekStart]);
+  const days = useMemo(() => deriveWeekDays(weekStart), [weekStart]);
   const weekEvents = useMemo(() => getWeekEvents(allEvents, weekStart), [allEvents, weekStart]);
 
   return (
@@ -82,7 +62,7 @@ export default function CalendarPage() {
         <div className="flex gap-2 overflow-x-auto pb-2">
           {days.map((day) => {
             const dayStr = day.toLocaleDateString("en-CA");
-            const dayEvents = weekEvents.filter((e) => getEventStartDate(e) === dayStr);
+            const dayEvents = weekEvents.filter((e) => eventStartDate(e) === dayStr);
             return <DayColumn key={dayStr} day={day} events={dayEvents} />;
           })}
         </div>
