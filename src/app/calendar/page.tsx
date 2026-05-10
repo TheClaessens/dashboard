@@ -1,12 +1,17 @@
 "use client";
 
-import { useMemo } from "react";
+import { type FC, useMemo } from "react";
 import { useCalendarEvents } from "@/app/calendar/hooks/useCalendarEvents";
 import { getWeekEvents, formatEventTime } from "@/lib/schemas/calendar";
 import { deriveWeekStart, deriveWeekDays, eventStartDate } from "@/app/calendar/page.utils";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
 
-function DayColumn({ day, events }: { day: Date; events: CalendarEvent[] }) {
+interface DayColumnProps {
+  day: Date;
+  events: CalendarEvent[];
+}
+
+const DayColumn: FC<DayColumnProps> = ({ day, events }) => {
   const label = day.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
   const isToday = day.toLocaleDateString("en-CA") === new Date().toLocaleDateString("en-CA");
 
@@ -28,7 +33,7 @@ function DayColumn({ day, events }: { day: Date; events: CalendarEvent[] }) {
       </ul>
     </div>
   );
-}
+};
 
 function LoadingState() {
   return (

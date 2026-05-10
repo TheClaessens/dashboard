@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export function useAddTodo(listId: string | null, onSuccess: () => void) {
+export function useAddTodo(listId: string | null) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (title: string) =>
@@ -9,9 +9,6 @@ export function useAddTodo(listId: string | null, onSuccess: () => void) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title, listId }),
       }),
-    onSuccess: () => {
-      onSuccess();
-      queryClient.invalidateQueries({ queryKey: ["todos"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
   });
 }
