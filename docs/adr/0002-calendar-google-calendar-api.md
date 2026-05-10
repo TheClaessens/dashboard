@@ -1,5 +1,5 @@
 # Calendar Module reads from Google Calendar, not a custom event store
 
-The Calendar Module is an Aggregated Module — it displays events from Thomas's existing Google Calendar rather than managing its own event data. Since Google SSO is already required for login, the `calendar.readonly` OAuth scope can be requested at authentication time, giving access to real calendar data with no additional infrastructure or data duplication.
+The Calendar Module is an Aggregated Module — it displays events from Thomas's existing Google Calendar rather than managing its own event data. Auth uses email/password (not Google SSO), so Google Calendar access requires a separate OAuth flow or a service account with a long-lived API key stored as an environment variable. The specific mechanism is deferred to when issue #3 is implemented.
 
 There is no events table in the database.
