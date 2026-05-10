@@ -1,6 +1,4 @@
-import { pgTable, text, timestamp, uuid, pgEnum } from "drizzle-orm/pg-core";
-
-export const todoStatusEnum = pgEnum("todo_status", ["open", "done"]);
+import { pgTable, text, timestamp, uuid } from "drizzle-orm/pg-core";
 
 export const lists = pgTable("lists", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -11,13 +9,8 @@ export const lists = pgTable("lists", {
 export const todos = pgTable("todos", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),
-  status: todoStatusEnum("status").default("open").notNull(),
   dueDate: text("due_date"),
+  completedAt: timestamp("completed_at"),
   listId: uuid("list_id").references(() => lists.id, { onDelete: "set null" }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
-
-export type List = typeof lists.$inferSelect;
-export type Todo = typeof todos.$inferSelect;
-export type NewTodo = typeof todos.$inferInsert;
-export type NewList = typeof lists.$inferInsert;

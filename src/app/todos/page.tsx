@@ -1,121 +1,161 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Todo, List } from "@/db/schema";
+import { useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import type { Todo, List } from "@/lib/schemas/todo";
+
+async function fetchTodos(listId: string | null): Promise<Todo[]> {
+  const url = listId ? `/api/todos?listId=${listId}` : "/api/todos";
+  const res = await fetch(url);
+  return res.json();
+}
+
+async function fetchLists(): Promise<List[]> {
+  const res = await fetch("/api/lists");
+  return res.json();
+}
+
+function LoadingState() {
+  return (
+    <div className="space-y-2">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+      ))}
+    </div>
+  );
+}
+
+function EmptyState() {
+  return <p className="text-sm text-zinc-400">No todos yet. Add one above.</p>;
+}
 
 export default function TodosPage() {
-  const [todos, setTodos] = useState<Todo[]>([]);
-  const [lists, setLists] = useState<List[]>([]);
+  const queryClient = useQueryClient();
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const [newListName, setNewListName] = useState("");
 
-  async function load() {
-    const url = selectedListId ? `/api/todos?listId=${selectedListId}` : "/api/todos";
-    const [todosRes, listsRes] = await Promise.all([fetch(url), fetch("/api/lists")]);
-    setTodos(await todosRes.json());
-    setLists(await listsRes.json());
-  }
+  const { data: todos = [], isLoading: todosLoading } = useQuery({
+    queryKey: ["todos", selectedListId],
+    queryFn: () => fetchTodos(selectedListId),
+  });
 
-  useEffect(() => { load(); }, [selectedListId]);
+  const { data: lists = [] } = useQuery({
+    queryKey: ["lists"],
+    queryFn: fetchLists,
+  });
 
-  async function addTodo() {
-    if (!newTitle.trim()) return;
-    await fetch("/api/todos", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: newTitle, listId: selectedListId }),
-    });
-    setNewTitle("");
-    load();
-  }
+  const addTodo = useMutation({
+    mutationFn: (title: string) =>
+      fetch("/api/todos", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title, listId: selectedListId }),
+      }),
+    onSuccess: () => {
+      setNewTitle("");
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
 
-  async function toggleTodo(todo: Todo) {
-    await fetch(`/api/todos/${todo.id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: todo.status === "open" ? "done" : "open" }),
-    });
-    load();
-  }
+  const toggleTodo = useMutation({
+    mutationFn: (todo: Todo) =>
+      fetch(`/api/todos/${todo.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          completedAt: todo.completedAt ? null : new Date().toISOString(),
+        }),
+      }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
 
-  async function deleteTodo(id: string) {
-    await fetch(`/api/todos/${id}`, { method: "DELETE" });
-    load();
-  }
+  const deleteTodo = useMutation({
+    mutationFn: (id: string) => fetch(`/api/todos/${id}`, { method: "DELETE" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["todos"] }),
+  });
 
-  async function addList() {
-    if (!newListName.trim()) return;
-    await fetch("/api/lists", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newListName }),
-    });
-    setNewListName("");
-    load();
-  }
+  const addList = useMutation({
+    mutationFn: (name: string) =>
+      fetch("/api/lists", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      }),
+    onSuccess: () => {
+      setNewListName("");
+      queryClient.invalidateQueries({ queryKey: ["lists"] });
+    },
+  });
 
   return (
     <div className="max-w-2xl">
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6">Todos</h1>
 
-      {/* List filter */}
       <div className="flex flex-wrap gap-2 mb-6">
-        <button
+        <Badge
+          variant={!selectedListId ? "default" : "outline"}
+          className="cursor-pointer"
           onClick={() => setSelectedListId(null)}
-          className={`rounded-full px-3 py-1 text-sm ${!selectedListId ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
         >
           All
-        </button>
+        </Badge>
         {lists.map((list) => (
-          <button
+          <Badge
             key={list.id}
+            variant={selectedListId === list.id ? "default" : "outline"}
+            className="cursor-pointer"
             onClick={() => setSelectedListId(list.id)}
-            className={`rounded-full px-3 py-1 text-sm ${selectedListId === list.id ? "bg-zinc-900 text-white dark:bg-zinc-50 dark:text-zinc-900" : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300"}`}
           >
             {list.name}
-          </button>
+          </Badge>
         ))}
       </div>
 
-      {/* Add todo */}
       <div className="flex gap-2 mb-6">
-        <input
+        <Input
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addTodo()}
+          onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && addTodo.mutate(newTitle)}
           placeholder="New todo…"
-          className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"
         />
-        <button
-          onClick={addTodo}
-          className="rounded-lg bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 px-4 py-2 text-sm font-medium"
+        <Button
+          onClick={() => newTitle.trim() && addTodo.mutate(newTitle)}
+          disabled={addTodo.isPending}
         >
           Add
-        </button>
+        </Button>
       </div>
 
-      {/* Todo list */}
-      {todos.length === 0 ? (
-        <p className="text-sm text-zinc-400">No todos yet.</p>
-      ) : (
+      {todosLoading && <LoadingState />}
+
+      {!todosLoading && todos.length === 0 && <EmptyState />}
+
+      {!todosLoading && todos.length > 0 && (
         <ul className="space-y-2">
           {todos.map((todo) => (
-            <li key={todo.id} className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3">
-              <input
-                type="checkbox"
-                checked={todo.status === "done"}
-                onChange={() => toggleTodo(todo)}
-                className="h-4 w-4 rounded border-zinc-300"
+            <li
+              key={todo.id}
+              className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3"
+            >
+              <Checkbox
+                checked={!!todo.completedAt}
+                onCheckedChange={() => toggleTodo.mutate(todo)}
               />
-              <span className={`flex-1 text-sm ${todo.status === "done" ? "line-through text-zinc-400" : "text-zinc-800 dark:text-zinc-200"}`}>
+              <span
+                className={`flex-1 text-sm ${todo.completedAt ? "line-through text-zinc-400" : "text-zinc-800 dark:text-zinc-200"}`}
+              >
                 {todo.title}
               </span>
               {todo.dueDate && (
                 <span className="text-xs text-zinc-400">{todo.dueDate}</span>
               )}
               <button
-                onClick={() => deleteTodo(todo.id)}
+                onClick={() => deleteTodo.mutate(todo.id)}
                 className="text-zinc-300 hover:text-red-400 text-xs"
               >
                 ✕
@@ -125,21 +165,20 @@ export default function TodosPage() {
         </ul>
       )}
 
-      {/* Add list */}
       <div className="mt-8 flex gap-2">
-        <input
+        <Input
           value={newListName}
           onChange={(e) => setNewListName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addList()}
+          onKeyDown={(e) => e.key === "Enter" && newListName.trim() && addList.mutate(newListName)}
           placeholder="New list…"
-          className="flex-1 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-sm"
         />
-        <button
-          onClick={addList}
-          className="rounded-lg border border-zinc-200 dark:border-zinc-700 px-4 py-2 text-sm font-medium text-zinc-700 dark:text-zinc-300"
+        <Button
+          variant="outline"
+          onClick={() => newListName.trim() && addList.mutate(newListName)}
+          disabled={addList.isPending}
         >
           Add list
-        </button>
+        </Button>
       </div>
     </div>
   );

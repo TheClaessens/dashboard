@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import { Providers } from "@/components/providers";
 import "@/styles/globals.css";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
@@ -33,7 +34,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               </Link>
             ))}
           </nav>
-          <main className="flex-1 p-8">{children}</main>
+          <main className="flex-1 p-8">
+            <Providers>{children}</Providers>
+          </main>
         </div>
       </body>
     </html>
