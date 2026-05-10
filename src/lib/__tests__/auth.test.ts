@@ -1,25 +1,30 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { isAllowedEmail, isAuthorized } from "@/lib/auth-helpers";
+import { isValidCredentials, isAuthorized } from "@/lib/auth-helpers";
 
-describe("isAllowedEmail", () => {
+describe("isValidCredentials", () => {
   beforeEach(() => {
-    process.env.ALLOWED_EMAIL = "thomasclssns01@gmail.com";
+    process.env.ADMIN_EMAIL = "thomasclssns01@gmail.com";
+    process.env.ADMIN_PASSWORD = "correct-password";
   });
 
-  it("allows the configured email", () => {
-    expect(isAllowedEmail("thomasclssns01@gmail.com")).toBe(true);
+  it("accepts correct email and password", () => {
+    expect(isValidCredentials("thomasclssns01@gmail.com", "correct-password")).toBe(true);
   });
 
-  it("rejects a different email", () => {
-    expect(isAllowedEmail("someone@else.com")).toBe(false);
+  it("rejects wrong password", () => {
+    expect(isValidCredentials("thomasclssns01@gmail.com", "wrong-password")).toBe(false);
   });
 
-  it("rejects null", () => {
-    expect(isAllowedEmail(null)).toBe(false);
+  it("rejects wrong email", () => {
+    expect(isValidCredentials("other@email.com", "correct-password")).toBe(false);
   });
 
-  it("rejects undefined", () => {
-    expect(isAllowedEmail(undefined)).toBe(false);
+  it("rejects null email", () => {
+    expect(isValidCredentials(null, "correct-password")).toBe(false);
+  });
+
+  it("rejects null password", () => {
+    expect(isValidCredentials("thomasclssns01@gmail.com", null)).toBe(false);
   });
 });
 
