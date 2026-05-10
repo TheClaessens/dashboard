@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-export function useAddList(onSuccess: () => void) {
+export function useAddList() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (name: string) =>
@@ -9,9 +9,6 @@ export function useAddList(onSuccess: () => void) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),
       }),
-    onSuccess: () => {
-      onSuccess();
-      queryClient.invalidateQueries({ queryKey: ["lists"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["lists"] }),
   });
 }

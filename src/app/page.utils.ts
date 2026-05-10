@@ -1,11 +1,13 @@
 import { db } from "@/lib/db";
-import { todos } from "@/db/schema";
-import { isNull } from "drizzle-orm";
+import { todos, meals, foodItems } from "@/db/schema";
+import { isNull, eq } from "drizzle-orm";
 import { sortByDueDate } from "@/lib/schemas/todo";
 import { getCalendarEvents } from "@/lib/google-calendar";
 import { getTodayEvents } from "@/lib/schemas/calendar";
+import { sumMacros } from "@/lib/food";
 import type { Todo } from "@/lib/schemas/todo";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
+import type { Macros } from "@/lib/schemas/food";
 
 export async function getUpcomingTodos(): Promise<Todo[]> {
   const open = await db.select().from(todos).where(isNull(todos.completedAt));
@@ -23,4 +25,13 @@ export async function getTodayCalendarEvents(): Promise<CalendarEvent[]> {
   } catch {
     return [];
   }
+}
+
+export async function getTodayMacros(): Promise<Macros> {
+  const date = new Date().toLocaleDateString("en-CA");
+  const todayMeals = await db.select().from(meals).where(eq(meals.date, date));
+  const allItems = (
+    await Promise.all(todayMeals.map((m) => db.select().from(foodItems).where(eq(foodItems.mealId, m.id))))
+  ).flat();
+  return sumMacros(allItems);
 }

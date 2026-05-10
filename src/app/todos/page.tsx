@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import { type FC, useState } from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
-import { useTodos } from "./hooks/useTodos";
-import { useLists } from "./hooks/useLists";
-import { useAddTodo } from "./hooks/useAddTodo";
-import { useAddList } from "./hooks/useAddList";
-import { useToggleTodo } from "./hooks/useToggleTodo";
-import { useDeleteTodo } from "./hooks/useDeleteTodo";
+import { useTodos } from "@/app/todos/hooks/useTodos";
+import { useLists } from "@/app/todos/hooks/useLists";
+import { useToggleTodo } from "@/app/todos/hooks/useToggleTodo";
+import { useDeleteTodo } from "@/app/todos/hooks/useDeleteTodo";
+import { AddTodoForm } from "@/app/todos/components/AddTodoForm";
+import { AddListForm } from "@/app/todos/components/AddListForm";
 import type { Todo } from "@/lib/schemas/todo";
 
 function LoadingState() {
@@ -27,7 +25,11 @@ function EmptyState() {
   return <p className="text-sm text-zinc-400">No todos yet. Add one above.</p>;
 }
 
-function TodoItem({ todo }: { todo: Todo }) {
+interface TodoItemProps {
+  todo: Todo;
+}
+
+const TodoItem: FC<TodoItemProps> = ({ todo }) => {
   const toggleTodo = useToggleTodo();
   const deleteTodo = useDeleteTodo();
 
@@ -49,17 +51,12 @@ function TodoItem({ todo }: { todo: Todo }) {
       </button>
     </li>
   );
-}
+};
 
 export default function TodosPage() {
   const [selectedListId, setSelectedListId] = useState<string | null>(null);
-  const [newTitle, setNewTitle] = useState("");
-  const [newListName, setNewListName] = useState("");
-
   const { data: todos = [], isLoading: todosLoading } = useTodos(selectedListId);
   const { data: lists = [] } = useLists();
-  const addTodo = useAddTodo(selectedListId, () => setNewTitle(""));
-  const addList = useAddList(() => setNewListName(""));
 
   return (
     <div className="max-w-2xl">
@@ -81,17 +78,7 @@ export default function TodosPage() {
         ))}
       </div>
 
-      <div className="flex gap-2 mb-6">
-        <Input
-          value={newTitle}
-          onChange={(e) => setNewTitle(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && newTitle.trim() && addTodo.mutate(newTitle)}
-          placeholder="New todo…"
-        />
-        <Button onClick={() => newTitle.trim() && addTodo.mutate(newTitle)} disabled={addTodo.isPending}>
-          Add
-        </Button>
-      </div>
+      <AddTodoForm selectedListId={selectedListId} />
 
       {todosLoading && <LoadingState />}
       {!todosLoading && todos.length === 0 && <EmptyState />}
@@ -101,16 +88,8 @@ export default function TodosPage() {
         </ul>
       )}
 
-      <div className="mt-8 flex gap-2">
-        <Input
-          value={newListName}
-          onChange={(e) => setNewListName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && newListName.trim() && addList.mutate(newListName)}
-          placeholder="New list…"
-        />
-        <Button variant="outline" onClick={() => newListName.trim() && addList.mutate(newListName)} disabled={addList.isPending}>
-          Add list
-        </Button>
+      <div className="mt-8">
+        <AddListForm />
       </div>
     </div>
   );
