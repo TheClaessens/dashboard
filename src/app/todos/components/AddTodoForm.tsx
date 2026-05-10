@@ -22,10 +22,10 @@ export const AddTodoForm: FC<AddTodoFormProps> = ({ selectedListId }) => {
   const onSubmit = (data: CreateTodoInput) => mutate(data.title, { onSuccess: () => reset() });
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2 mb-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="mb-6 flex gap-2">
       <div className="flex-1">
         <Input {...register("title")} placeholder="New todo…" />
-        {errors.title && <p className="text-xs text-red-500 mt-0.5">{errors.title.message}</p>}
+        {errors.title && <p className="mt-0.5 text-xs text-red-500">{errors.title.message}</p>}
       </div>
       <Button type="submit" disabled={isPending}>Add</Button>
     </form>

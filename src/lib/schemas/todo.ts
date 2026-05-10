@@ -20,20 +20,20 @@ export type CreateTodoInput = z.infer<typeof createTodoSchema>;
 export type UpdateTodoInput = z.infer<typeof updateTodoSchema>;
 export type CreateListInput = z.infer<typeof createListSchema>;
 
-export type Todo = {
+export interface Todo {
   id: string;
   title: string;
   dueDate: string | null;
   completedAt: Date | null;
   listId: string | null;
   createdAt: Date;
-};
+}
 
-export type List = {
+export interface List {
   id: string;
   name: string;
   createdAt: Date;
-};
+}
 
 type TodoWithDueDate = Pick<Todo, "dueDate" | "completedAt"> & { id: string; [key: string]: unknown };
 
