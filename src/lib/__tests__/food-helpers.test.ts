@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { sumMacros, scaleMacros } from "@/lib/schemas/food";
+import { sumMacros, scaleMacros } from "@/lib/food";
 
 describe("sumMacros", () => {
   it("returns zeros for empty list", () => {

@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { todos, meals, foodItems } from "@/db/schema";
 import { isNull, eq } from "drizzle-orm";
 import { sortByDueDate } from "@/lib/schemas/todo";
-import { sumMacros } from "@/lib/schemas/food";
+import { sumMacros } from "@/lib/food";
 import type { Todo } from "@/lib/schemas/todo";
 import type { Macros } from "@/lib/schemas/food";
 

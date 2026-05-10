@@ -7,6 +7,22 @@ export type FoodSearchResult = {
   fat: number;
 };
 
+type OFFProduct = {
+  code: string;
+  product_name: string;
+  nutriments: Record<string, number>;
+};
+
+function isOFFProduct(p: unknown): p is OFFProduct {
+  if (typeof p !== "object" || p === null) return false;
+  const obj = p as Record<string, unknown>;
+  return (
+    typeof obj.product_name === "string" &&
+    obj.product_name !== "" &&
+    "nutriments" in obj
+  );
+}
+
 export async function searchFoods(query: string): Promise<FoodSearchResult[]> {
   const params = new URLSearchParams({
     search_terms: query,
@@ -30,22 +46,12 @@ export async function searchFoods(query: string): Promise<FoodSearchResult[]> {
 
   const data = await res.json();
   const products: unknown[] = data.products ?? [];
-  return products
-    .filter(
-      (p): p is { code: string; product_name: string; nutriments: Record<string, number> } =>
-        typeof p === "object" &&
-        p !== null &&
-        "product_name" in p &&
-        typeof (p as Record<string, unknown>).product_name === "string" &&
-        (p as Record<string, unknown>).product_name !== "" &&
-        "nutriments" in p
-    )
-    .map((p) => ({
-      offId: p.code,
-      name: p.product_name,
-      calories: p.nutriments["energy-kcal_100g"] ?? 0,
-      protein: p.nutriments["proteins_100g"] ?? 0,
-      carbs: p.nutriments["carbohydrates_100g"] ?? 0,
-      fat: p.nutriments["fat_100g"] ?? 0,
-    }));
+  return products.filter(isOFFProduct).map((p) => ({
+    offId: p.code,
+    name: p.product_name,
+    calories: p.nutriments["energy-kcal_100g"] ?? 0,
+    protein: p.nutriments["proteins_100g"] ?? 0,
+    carbs: p.nutriments["carbohydrates_100g"] ?? 0,
+    fat: p.nutriments["fat_100g"] ?? 0,
+  }));
 }
