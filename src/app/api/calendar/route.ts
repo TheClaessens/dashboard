@@ -13,7 +13,9 @@ export async function GET(req: NextRequest) {
   try {
     const events = await getCalendarEvents(new Date(timeMin), new Date(timeMax));
     return Response.json(events);
-  } catch {
-    return Response.json({ error: "Failed to fetch calendar events" }, { status: 502 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[calendar]", message);
+    return Response.json({ error: message }, { status: 502 });
   }
 }

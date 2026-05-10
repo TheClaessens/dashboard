@@ -8,7 +8,8 @@ import type { CalendarEvent } from "@/lib/schemas/calendar";
 function getWeekStart(): Date {
   const d = new Date();
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - d.getDay() + 1); // Monday
+  const dayOfWeek = d.getDay() || 7; // Sunday=0 → 7, keeps Mon-first convention
+  d.setDate(d.getDate() - dayOfWeek + 1);
   return d;
 }
 
@@ -21,12 +22,13 @@ function getWeekDays(weekStart: Date): Date[] {
 }
 
 function getEventStartDate(event: CalendarEvent): string {
-  return "dateTime" in event.start ? event.start.dateTime.slice(0, 10) : event.start.date;
+  if ("date" in event.start) return event.start.date;
+  return new Date(event.start.dateTime).toLocaleDateString("en-CA");
 }
 
 function DayColumn({ day, events }: { day: Date; events: CalendarEvent[] }) {
   const label = day.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" });
-  const isToday = day.toISOString().slice(0, 10) === new Date().toISOString().slice(0, 10);
+  const isToday = day.toLocaleDateString("en-CA") === new Date().toLocaleDateString("en-CA");
 
   return (
     <div className="flex-1 min-w-0">
@@ -79,7 +81,7 @@ export default function CalendarPage() {
       {!isLoading && (
         <div className="flex gap-2 overflow-x-auto pb-2">
           {days.map((day) => {
-            const dayStr = day.toISOString().slice(0, 10);
+            const dayStr = day.toLocaleDateString("en-CA");
             const dayEvents = weekEvents.filter((e) => getEventStartDate(e) === dayStr);
             return <DayColumn key={dayStr} day={day} events={dayEvents} />;
           })}

@@ -13,7 +13,9 @@ async function getAccessToken(): Promise<string> {
     }),
   });
   const data = await res.json();
-  if (!data.access_token) throw new Error("Failed to get Google access token");
+  if (!data.access_token) {
+    throw new Error(`Google token exchange failed: ${JSON.stringify(data)}`);
+  }
   return data.access_token;
 }
 
