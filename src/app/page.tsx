@@ -1,48 +1,60 @@
 export const dynamic = "force-dynamic";
 
+import { type FC } from "react";
 import Link from "next/link";
-import { db } from "@/lib/db";
-import { todos, meals, foodItems } from "@/db/schema";
-import { isNull, eq } from "drizzle-orm";
-import { sortByDueDate } from "@/lib/schemas/todo";
-import { sumMacros } from "@/lib/food";
+import { formatEventTime } from "@/lib/schemas/calendar";
+import { getUpcomingTodos, getTodayCalendarEvents, getTodayMacros } from "@/app/page.utils";
 import type { Todo } from "@/lib/schemas/todo";
+import type { CalendarEvent } from "@/lib/schemas/calendar";
 import type { Macros } from "@/lib/schemas/food";
 
-async function getUpcomingTodos(): Promise<Todo[]> {
-  const open = await db.select().from(todos).where(isNull(todos.completedAt));
-  return sortByDueDate(open).slice(0, 3);
+interface TodosWidgetProps {
+  items: Todo[];
 }
 
-async function getTodayMacros(): Promise<Macros> {
-  const date = new Date().toLocaleDateString("en-CA");
-  const todayMeals = await db.select().from(meals).where(eq(meals.date, date));
-  const allItems = (
-    await Promise.all(todayMeals.map((m) => db.select().from(foodItems).where(eq(foodItems.mealId, m.id))))
-  ).flat();
-  return sumMacros(allItems);
+const TodosWidget: FC<TodosWidgetProps> = ({ items }) => (
+  <Link href="/todos" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Todos</h2>
+    {items.length === 0 && <p className="text-sm text-zinc-400">No open todos.</p>}
+    {items.length > 0 && (
+      <ul className="space-y-1">
+        {items.map((todo) => (
+          <li key={todo.id} className="text-sm text-zinc-600 dark:text-zinc-400 flex justify-between">
+            <span>{todo.title}</span>
+            {todo.dueDate && <span className="text-xs text-zinc-400">{todo.dueDate}</span>}
+          </li>
+        ))}
+      </ul>
+    )}
+  </Link>
+);
+
+interface CalendarWidgetProps {
+  events: CalendarEvent[];
 }
 
-function TodosWidget({ items }: { items: Todo[] }) {
-  return (
-    <Link href="/todos" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Todos</h2>
-      {items.length === 0 && <p className="text-sm text-zinc-400">No open todos.</p>}
-      {items.length > 0 && (
-        <ul className="space-y-1">
-          {items.map((todo) => (
-            <li key={todo.id} className="text-sm text-zinc-600 dark:text-zinc-400 flex justify-between">
-              <span>{todo.title}</span>
-              {todo.dueDate && <span className="text-xs text-zinc-400">{todo.dueDate}</span>}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Link>
-  );
+const CalendarWidget: FC<CalendarWidgetProps> = ({ events }) => (
+  <Link href="/calendar" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Today</h2>
+    {events.length === 0 && <p className="text-sm text-zinc-400">Nothing scheduled today.</p>}
+    {events.length > 0 && (
+      <ul className="space-y-1">
+        {events.map((event) => (
+          <li key={event.id} className="text-sm text-zinc-600 dark:text-zinc-400 flex justify-between gap-2">
+            <span className="truncate">{event.summary}</span>
+            <span className="text-xs text-zinc-400 shrink-0">{formatEventTime(event)}</span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </Link>
+);
+
+interface FoodWidgetProps {
+  macros: Macros;
 }
 
-function FoodWidget({ macros }: { macros: Macros }) {
+const FoodWidget: FC<FoodWidgetProps> = ({ macros }) => {
   const hasData = macros.calories > 0;
   return (
     <Link href="/food" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
@@ -62,19 +74,22 @@ function FoodWidget({ macros }: { macros: Macros }) {
       )}
     </Link>
   );
+};
+
+interface PlaceholderWidgetProps {
+  label: string;
 }
 
-function PlaceholderWidget({ label }: { label: string }) {
-  return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 text-zinc-400 text-sm">
-      {label} widget coming soon
-    </div>
-  );
-}
+const PlaceholderWidget: FC<PlaceholderWidgetProps> = ({ label }) => (
+  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 text-zinc-400 text-sm">
+    {label} widget coming soon
+  </div>
+);
 
 export default async function DashboardPage() {
-  const [upcomingTodos, todayMacros] = await Promise.all([
+  const [upcomingTodos, todayEvents, todayMacros] = await Promise.all([
     getUpcomingTodos(),
+    getTodayCalendarEvents(),
     getTodayMacros(),
   ]);
 
@@ -83,7 +98,7 @@ export default async function DashboardPage() {
       <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6">Dashboard</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <TodosWidget items={upcomingTodos} />
-        <PlaceholderWidget label="Calendar" />
+        <CalendarWidget events={todayEvents} />
         <FoodWidget macros={todayMacros} />
         <PlaceholderWidget label="Health" />
       </div>
