@@ -37,8 +37,8 @@ A reusable Meal definition that can be re-logged quickly without re-entering eve
 _Avoid_: Meal template, preset meal, favourite meal
 
 **Todo**:
-A task with a title, a status (open or done), an optional due date, and an optional List.
-_Avoid_: Task, item, card
+A task with a title, an optional due date, an optional List, and an optional completion timestamp. A Todo is **open** when `completed_at` is null; **done** when `completed_at` is set.
+_Avoid_: Task, item, card, status (as a stored field)
 
 **List**:
 A named grouping that organises Todos. A Todo belongs to at most one List.
@@ -57,7 +57,7 @@ _Avoid_: Project, group, label, tag, category
 ## Example dialogue
 
 > **Dev:** "Should the Todos Widget show all open todos?"
-> **Thomas:** "No — just the most urgent few. The full list lives on the Todos Module detail page."
+> **Thomas:** "No — just the most urgent few. Open means completed_at is null. The full list lives on the Todos Module detail page."
 
 > **Dev:** "When I log breakfast, is each food a Meal or a Food Item?"
 > **Thomas:** "Breakfast is the Meal. Oatmeal and banana are the Food Items inside it."

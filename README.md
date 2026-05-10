@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
 
+## Disclaimer
+
+This project is 100% vibe-coded using Claude Code only. I relied on heavy skill-usage using the now popular suite of skills Matt Popock created.
+
+The goal of the project is to find out where some common pitfalls occur when focussing solely on vibed code. Reviews are still done manually, however, not a single letter of code should be written.
+
 ## Getting Started
 
 First, run the development server:
