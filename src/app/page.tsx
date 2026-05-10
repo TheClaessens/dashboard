@@ -3,9 +3,10 @@ export const dynamic = "force-dynamic";
 import { type FC } from "react";
 import Link from "next/link";
 import { formatEventTime } from "@/lib/schemas/calendar";
-import { getUpcomingTodos, getTodayCalendarEvents } from "@/app/page.utils";
+import { getUpcomingTodos, getTodayCalendarEvents, getTodayMacros } from "@/app/page.utils";
 import type { Todo } from "@/lib/schemas/todo";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
+import type { Macros } from "@/lib/schemas/food";
 
 interface TodosWidgetProps {
   items: Todo[];
@@ -49,6 +50,32 @@ const CalendarWidget: FC<CalendarWidgetProps> = ({ events }) => (
   </Link>
 );
 
+interface FoodWidgetProps {
+  macros: Macros;
+}
+
+const FoodWidget: FC<FoodWidgetProps> = ({ macros }) => {
+  const hasData = macros.calories > 0;
+  return (
+    <Link href="/food" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
+      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Food</h2>
+      {!hasData && <p className="text-sm text-zinc-400">Nothing logged today.</p>}
+      {hasData && (
+        <div className="space-y-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400">
+            <span className="font-medium">{Math.round(macros.calories)}</span> kcal
+          </p>
+          <div className="flex gap-3 text-xs text-zinc-400">
+            <span>P {Math.round(macros.protein)}g</span>
+            <span>C {Math.round(macros.carbs)}g</span>
+            <span>F {Math.round(macros.fat)}g</span>
+          </div>
+        </div>
+      )}
+    </Link>
+  );
+};
+
 interface PlaceholderWidgetProps {
   label: string;
 }
@@ -60,9 +87,10 @@ const PlaceholderWidget: FC<PlaceholderWidgetProps> = ({ label }) => (
 );
 
 export default async function DashboardPage() {
-  const [upcomingTodos, todayEvents] = await Promise.all([
+  const [upcomingTodos, todayEvents, todayMacros] = await Promise.all([
     getUpcomingTodos(),
     getTodayCalendarEvents(),
+    getTodayMacros(),
   ]);
 
   return (
@@ -71,7 +99,7 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <TodosWidget items={upcomingTodos} />
         <CalendarWidget events={todayEvents} />
-        <PlaceholderWidget label="Food" />
+        <FoodWidget macros={todayMacros} />
         <PlaceholderWidget label="Health" />
       </div>
     </div>
