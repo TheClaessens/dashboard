@@ -1,15 +1,24 @@
+import { type FC } from "react";
 import { sumMacros } from "@/lib/food";
 import type { FoodItem } from "@/lib/schemas/food";
 
-function MacroRow({ label, value, unit = "g" }: { label: string; value: number; unit?: string }) {
-  return (
-    <span className="text-sm text-zinc-600 dark:text-zinc-400">
-      <span className="font-medium">{label}</span> {Math.round(value * 10) / 10}{unit}
-    </span>
-  );
+interface MacroRowProps {
+  label: string;
+  value: number;
+  unit?: string;
 }
 
-export function MacroSummary({ items }: { items: Pick<FoodItem, "calories" | "protein" | "carbs" | "fat">[] }) {
+const MacroRow: FC<MacroRowProps> = ({ label, value, unit = "g" }) => (
+  <span className="text-sm text-zinc-600 dark:text-zinc-400">
+    <span className="font-medium">{label}</span> {Math.round(value * 10) / 10}{unit}
+  </span>
+);
+
+interface MacroSummaryProps {
+  items: Pick<FoodItem, "calories" | "protein" | "carbs" | "fat">[];
+}
+
+export const MacroSummary: FC<MacroSummaryProps> = ({ items }) => {
   const totals = sumMacros(items);
   return (
     <div className="flex flex-wrap gap-4">
@@ -19,4 +28,4 @@ export function MacroSummary({ items }: { items: Pick<FoodItem, "calories" | "pr
       <MacroRow label="Fat" value={totals.fat} />
     </div>
   );
-}
+};

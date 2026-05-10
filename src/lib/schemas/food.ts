@@ -14,6 +14,10 @@ export const addFoodItemSchema = z.object({
   fat: z.number().nonnegative(),
 });
 
+export const quantitySchema = z.object({
+  quantity: z.number().positive("Quantity must be greater than 0"),
+});
+
 export const macrosSchema = z.object({
   calories: z.number().nonnegative(),
   protein: z.number().nonnegative(),

@@ -1,11 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { type FC, useState } from "react";
 import { MacroSummary } from "@/app/food/components/MacroSummary";
 import { FoodSearchInput } from "@/app/food/components/FoodSearchInput";
 import type { Meal } from "@/lib/schemas/food";
 
-export function MealCard({ meal, date }: { meal: Meal; date: string }) {
+interface MealCardProps {
+  meal: Meal;
+  date: string;
+}
+
+export const MealCard: FC<MealCardProps> = ({ meal, date }) => {
   const [adding, setAdding] = useState(false);
 
   return (
@@ -42,4 +47,4 @@ export function MealCard({ meal, date }: { meal: Meal; date: string }) {
       {adding && <FoodSearchInput mealId={meal.id} date={date} onDone={() => setAdding(false)} />}
     </div>
   );
-}
+};

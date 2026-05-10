@@ -1,30 +1,39 @@
 "use client";
 
-import { useState } from "react";
+import { type FC } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useAddMeal } from "@/app/food/hooks/useAddMeal";
+import { createMealSchema, type CreateMealInput } from "@/lib/schemas/food";
 
-export function AddMealForm({ date, onDone }: { date: string; onDone: () => void }) {
-  const [name, setName] = useState("");
+interface AddMealFormProps {
+  date: string;
+  onDone: () => void;
+}
+
+export const AddMealForm: FC<AddMealFormProps> = ({ date, onDone }) => {
+  const { register, handleSubmit, formState: { errors } } = useForm<CreateMealInput>({
+    resolver: zodResolver(createMealSchema),
+    defaultValues: { name: "", date },
+  });
   const { mutate, isPending } = useAddMeal(date);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!name.trim()) return;
-    mutate({ name: name.trim(), date }, { onSuccess: onDone });
-  }
+  const onSubmit = (data: CreateMealInput) => mutate(data, { onSuccess: onDone });
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <input
-        className="flex-1 rounded border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm bg-white dark:bg-zinc-900"
-        placeholder="Meal name (e.g. Breakfast)"
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        autoFocus
-      />
+    <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
+      <div className="flex-1">
+        <input
+          {...register("name")}
+          className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm bg-white dark:bg-zinc-900"
+          placeholder="Meal name (e.g. Breakfast)"
+          autoFocus
+        />
+        {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name.message}</p>}
+      </div>
       <button
         type="submit"
-        disabled={isPending || !name.trim()}
+        disabled={isPending}
         className="rounded bg-blue-600 text-white text-sm px-4 py-1.5 disabled:opacity-50"
       >
         Add
@@ -34,4 +43,4 @@ export function AddMealForm({ date, onDone }: { date: string; onDone: () => void
       </button>
     </form>
   );
-}
+};
