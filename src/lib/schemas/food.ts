@@ -30,7 +30,7 @@ export type Macros = z.infer<typeof macrosSchema>;
 export type CreateMealInput = z.infer<typeof createMealSchema>;
 export type AddFoodItemInput = z.infer<typeof addFoodItemSchema>;
 
-export type FoodItem = {
+export interface FoodItem {
   id: string;
   mealId: string;
   name: string;
@@ -40,12 +40,12 @@ export type FoodItem = {
   carbs: number;
   fat: number;
   createdAt: Date;
-};
+}
 
-export type Meal = {
+export interface Meal {
   id: string;
   name: string;
   date: string;
   createdAt: Date;
   items: FoodItem[];
-};
+}

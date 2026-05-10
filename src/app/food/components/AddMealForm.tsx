@@ -25,16 +25,16 @@ export const AddMealForm: FC<AddMealFormProps> = ({ date, onDone }) => {
       <div className="flex-1">
         <input
           {...register("name")}
-          className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-3 py-1.5 text-sm bg-white dark:bg-zinc-900"
+          className="w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-700 dark:bg-zinc-900"
           placeholder="Meal name (e.g. Breakfast)"
           autoFocus
         />
-        {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name.message}</p>}
+        {errors.name && <p className="mt-0.5 text-xs text-red-500">{errors.name.message}</p>}
       </div>
       <button
         type="submit"
         disabled={isPending}
-        className="rounded bg-blue-600 text-white text-sm px-4 py-1.5 disabled:opacity-50"
+        className="rounded bg-blue-600 px-4 py-1.5 text-sm text-white disabled:opacity-50"
       >
         Add
       </button>

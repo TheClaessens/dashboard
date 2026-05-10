@@ -35,7 +35,7 @@ const ManualEntryForm: FC<ManualEntryFormProps> = ({ mealId, date, onDone, onBac
       <div>
         <input
           {...register("name")}
-          className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800"
+          className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           placeholder="Food name"
         />
         {errors.name && <p className="text-xs text-red-500">{errors.name.message}</p>}
@@ -46,7 +46,7 @@ const ManualEntryForm: FC<ManualEntryFormProps> = ({ mealId, date, onDone, onBac
             <input
               {...register(field, { valueAsNumber: true })}
               type="number"
-              className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800"
+              className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
               placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
             />
             {errors[field] && <p className="text-xs text-red-500">{errors[field]?.message}</p>}
@@ -57,7 +57,7 @@ const ManualEntryForm: FC<ManualEntryFormProps> = ({ mealId, date, onDone, onBac
         <input
           {...register("quantity", { valueAsNumber: true })}
           type="number"
-          className="w-full rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800"
+          className="w-full rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           placeholder="Quantity (g)"
         />
         {errors.quantity && <p className="text-xs text-red-500">{errors.quantity.message}</p>}
@@ -66,7 +66,7 @@ const ManualEntryForm: FC<ManualEntryFormProps> = ({ mealId, date, onDone, onBac
         <button
           type="submit"
           disabled={isPending}
-          className="flex-1 rounded bg-blue-600 text-white text-sm px-3 py-1 disabled:opacity-50"
+          className="flex-1 rounded bg-blue-600 px-3 py-1 text-sm text-white disabled:opacity-50"
         >
           Add
         </button>
@@ -84,15 +84,15 @@ interface SearchResultsProps {
 }
 
 const SearchResults: FC<SearchResultsProps> = ({ results, onSelect }) => (
-  <ul className="rounded border border-zinc-200 dark:border-zinc-700 divide-y divide-zinc-100 dark:divide-zinc-800 max-h-40 overflow-y-auto">
+  <ul className="max-h-40 divide-y divide-zinc-100 overflow-y-auto rounded border border-zinc-200 dark:divide-zinc-800 dark:border-zinc-700">
     {results.map((r) => (
       <li key={r.offId}>
         <button
           onClick={() => onSelect(r)}
-          className="w-full text-left px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
+          className="w-full px-3 py-1.5 text-left text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800"
         >
           <span className="font-medium">{r.name}</span>
-          <span className="text-zinc-400 ml-2 text-xs">
+          <span className="ml-2 text-xs text-zinc-400">
             {r.calories}kcal · {r.protein}g P · {r.carbs}g C · {r.fat}g F per 100g
           </span>
         </button>
@@ -124,21 +124,21 @@ const QuantityForm: FC<QuantityFormProps> = ({ selected, mealId, date, onDone })
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2 items-start">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex items-start gap-2">
       <div>
         <input
           {...register("quantity", { valueAsNumber: true })}
           type="number"
-          className="w-24 rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800"
+          className="w-24 rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
           placeholder="g"
         />
         {errors.quantity && <p className="text-xs text-red-500">{errors.quantity.message}</p>}
       </div>
-      <span className="text-xs text-zinc-500 flex-1 self-center">g of {selected.name}</span>
+      <span className="flex-1 self-center text-xs text-zinc-500">g of {selected.name}</span>
       <button
         type="submit"
         disabled={isPending}
-        className="rounded bg-blue-600 text-white text-sm px-3 py-1 disabled:opacity-50"
+        className="rounded bg-blue-600 px-3 py-1 text-sm text-white disabled:opacity-50"
       >
         Add
       </button>
@@ -154,7 +154,7 @@ export const FoodSearchInput: FC<FoodSearchInputProps> = ({ mealId, date, onDone
   const { data: results = [], isFetching } = useFoodSearch(query);
 
   return (
-    <div className="space-y-2 p-3 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900">
+    <div className="space-y-2 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-900">
       {manualMode && (
         <ManualEntryForm mealId={mealId} date={date} onDone={onDone} onBack={() => setManualMode(false)} />
       )}
@@ -163,12 +163,12 @@ export const FoodSearchInput: FC<FoodSearchInputProps> = ({ mealId, date, onDone
         <>
           <div className="flex gap-2">
             <input
-              className="flex-1 rounded border border-zinc-300 dark:border-zinc-700 px-2 py-1 text-sm bg-white dark:bg-zinc-800"
+              className="flex-1 rounded border border-zinc-300 bg-white px-2 py-1 text-sm dark:border-zinc-700 dark:bg-zinc-800"
               placeholder="Search food..."
               value={query}
               onChange={(e) => { setQuery(e.target.value); setSelected(null); }}
             />
-            {isFetching && <span className="text-xs text-zinc-400 self-center">…</span>}
+            {isFetching && <span className="self-center text-xs text-zinc-400">…</span>}
           </div>
 
           {results.length > 0 && !selected && (

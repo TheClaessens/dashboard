@@ -25,8 +25,8 @@ export default function FoodPage() {
       </div>
 
       {allItems.length > 0 && (
-        <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4">
-          <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-2">Today&apos;s totals</h2>
+        <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <h2 className="mb-2 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Today&apos;s totals</h2>
           <MacroSummary items={allItems} />
         </div>
       )}
@@ -34,7 +34,7 @@ export default function FoodPage() {
       {isLoading && (
         <div className="space-y-3">
           {[1, 2].map((i) => (
-            <div key={i} className="h-24 rounded-xl bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+            <div key={i} className="h-24 animate-pulse rounded-xl bg-zinc-100 dark:bg-zinc-800" />
           ))}
         </div>
       )}
@@ -56,7 +56,7 @@ export default function FoodPage() {
       ) : (
         <button
           onClick={() => setAddingMeal(true)}
-          className="rounded-lg border border-dashed border-zinc-300 dark:border-zinc-700 px-4 py-2 text-sm text-zinc-500 hover:border-zinc-400 w-full"
+          className="w-full rounded-lg border border-dashed border-zinc-300 px-4 py-2 text-sm text-zinc-500 hover:border-zinc-400 dark:border-zinc-700"
         >
           + Add meal
         </button>

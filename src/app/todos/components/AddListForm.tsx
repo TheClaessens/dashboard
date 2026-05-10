@@ -20,7 +20,7 @@ export const AddListForm = () => {
     <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
       <div className="flex-1">
         <Input {...register("name")} placeholder="New list…" />
-        {errors.name && <p className="text-xs text-red-500 mt-0.5">{errors.name.message}</p>}
+        {errors.name && <p className="mt-0.5 text-xs text-red-500">{errors.name.message}</p>}
       </div>
       <Button type="submit" variant="outline" disabled={isPending}>Add list</Button>
     </form>

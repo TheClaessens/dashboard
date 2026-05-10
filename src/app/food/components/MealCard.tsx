@@ -14,7 +14,7 @@ export const MealCard: FC<MealCardProps> = ({ meal, date }) => {
   const [adding, setAdding] = useState(false);
 
   return (
-    <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 space-y-3">
+    <div className="space-y-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-zinc-900 dark:text-zinc-50">{meal.name}</h3>
         <button
@@ -34,7 +34,7 @@ export const MealCard: FC<MealCardProps> = ({ meal, date }) => {
           {meal.items.map((item) => (
             <li key={item.id} className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
               <span>
-                {item.name} <span className="text-zinc-400 text-xs">({item.quantity}g)</span>
+                {item.name} <span className="text-xs text-zinc-400">({item.quantity}g)</span>
               </span>
               <span className="text-xs text-zinc-400">{Math.round(item.calories)}kcal</span>
             </li>
