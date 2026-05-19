@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createMealSchema, addFoodItemSchema } from "@/lib/schemas/food";
+import { createMealSchema, addFoodItemSchema, createSavedMealSchema, savedMealItemSchema } from "@/lib/schemas/food";
 
 describe("createMealSchema", () => {
   it("rejects empty name", () => {
@@ -14,6 +14,42 @@ describe("createMealSchema", () => {
 
   it("accepts valid meal", () => {
     const result = createMealSchema.safeParse({ name: "Breakfast", date: "2026-05-10" });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("createSavedMealSchema", () => {
+  it("rejects empty name", () => {
+    const result = createSavedMealSchema.safeParse({ name: "" });
+    expect(result.success).toBe(false);
+  });
+
+  it("trims whitespace-only name", () => {
+    const result = createSavedMealSchema.safeParse({ name: "   " });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid name", () => {
+    const result = createSavedMealSchema.safeParse({ name: "Quick Breakfast" });
+    expect(result.success).toBe(true);
+  });
+});
+
+const validSavedItem = { name: "Chicken", defaultQuantity: 150, calories: 165, protein: 31, carbs: 0, fat: 3.6 };
+
+describe("savedMealItemSchema", () => {
+  it("rejects zero defaultQuantity", () => {
+    const result = savedMealItemSchema.safeParse({ ...validSavedItem, defaultQuantity: 0 });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects negative calories", () => {
+    const result = savedMealItemSchema.safeParse({ ...validSavedItem, calories: -1 });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts valid saved meal item", () => {
+    const result = savedMealItemSchema.safeParse(validSavedItem);
     expect(result.success).toBe(true);
   });
 });

@@ -6,8 +6,11 @@ async function getAccessToken(): Promise<string> {
     method: "POST",
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: new URLSearchParams({
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       client_id: process.env.GOOGLE_CLIENT_ID!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       client_secret: process.env.GOOGLE_CLIENT_SECRET!,
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       refresh_token: process.env.GOOGLE_REFRESH_TOKEN!,
       grant_type: "refresh_token",
     }),

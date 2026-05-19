@@ -25,6 +25,23 @@ export const foodItems = pgTable("food_items", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const savedMeals = pgTable("saved_meals", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const savedMealItems = pgTable("saved_meal_items", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  savedMealId: uuid("saved_meal_id").references(() => savedMeals.id, { onDelete: "cascade" }).notNull(),
+  name: text("name").notNull(),
+  defaultQuantity: real("default_quantity").notNull(),
+  calories: real("calories").notNull(),
+  protein: real("protein").notNull(),
+  carbs: real("carbs").notNull(),
+  fat: real("fat").notNull(),
+});
+
 export const todos = pgTable("todos", {
   id: uuid("id").defaultRandom().primaryKey(),
   title: text("title").notNull(),

@@ -3,7 +3,7 @@ export function isValidTodoInput(title: unknown): boolean {
   return title.trim().length > 0;
 }
 
-type TodoWithDueDate = { dueDate: string | null; [key: string]: unknown };
+interface TodoWithDueDate { dueDate: string | null; [key: string]: unknown }
 
 export function sortByDueDate<T extends TodoWithDueDate>(todos: T[]): T[] {
   return [...todos].sort((a, b) => {

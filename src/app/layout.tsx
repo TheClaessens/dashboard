@@ -21,9 +21,9 @@ const NAV_LINKS = [
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className={`${geist.variable} font-sans bg-zinc-50 dark:bg-black`}>
+      <body className={`${geist.variable} bg-zinc-50 font-sans dark:bg-black`}>
         <div className="flex min-h-screen">
-          <nav className="w-56 shrink-0 border-r border-zinc-200 dark:border-zinc-800 p-6 flex flex-col gap-2">
+          <nav className="flex w-56 shrink-0 flex-col gap-2 border-r border-zinc-200 p-6 dark:border-zinc-800">
             {NAV_LINKS.map(({ href, label }) => (
               <Link
                 key={href}

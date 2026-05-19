@@ -15,7 +15,7 @@ function LoadingState() {
   return (
     <div className="space-y-2">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="h-12 rounded-lg bg-zinc-100 dark:bg-zinc-800 animate-pulse" />
+        <div key={i} className="h-12 animate-pulse rounded-lg bg-zinc-100 dark:bg-zinc-800" />
       ))}
     </div>
   );
@@ -34,18 +34,18 @@ const TodoItem: FC<TodoItemProps> = ({ todo }) => {
   const deleteTodo = useDeleteTodo();
 
   return (
-    <li className="flex items-center gap-3 rounded-lg border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-4 py-3">
+    <li className="flex items-center gap-3 rounded-lg border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
       <Checkbox
         checked={!!todo.completedAt}
         onCheckedChange={() => toggleTodo.mutate(todo)}
       />
-      <span className={`flex-1 text-sm ${todo.completedAt ? "line-through text-zinc-400" : "text-zinc-800 dark:text-zinc-200"}`}>
+      <span className={`flex-1 text-sm ${todo.completedAt ? "text-zinc-400 line-through" : "text-zinc-800 dark:text-zinc-200"}`}>
         {todo.title}
       </span>
       {todo.dueDate && <span className="text-xs text-zinc-400">{todo.dueDate}</span>}
       <button
         onClick={() => deleteTodo.mutate(todo.id)}
-        className="text-zinc-300 hover:text-red-400 text-xs"
+        className="text-xs text-zinc-300 hover:text-red-400"
       >
         ✕
       </button>
@@ -60,9 +60,9 @@ export default function TodosPage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6">Todos</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Todos</h1>
 
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="mb-6 flex flex-wrap gap-2">
         <Badge variant={!selectedListId ? "default" : "outline"} className="cursor-pointer" onClick={() => setSelectedListId(null)}>
           All
         </Badge>

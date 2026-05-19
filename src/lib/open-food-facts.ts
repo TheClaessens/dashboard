@@ -1,17 +1,17 @@
-export type FoodSearchResult = {
+export interface FoodSearchResult {
   offId: string;
   name: string;
   calories: number;
   protein: number;
   carbs: number;
   fat: number;
-};
+}
 
-type OFFProduct = {
+interface OFFProduct {
   code: string;
   product_name: string;
   nutriments: Record<string, number>;
-};
+}
 
 function isOFFProduct(p: unknown): p is OFFProduct {
   if (typeof p !== "object" || p === null) return false;

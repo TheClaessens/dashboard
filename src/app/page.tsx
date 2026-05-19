@@ -13,13 +13,13 @@ interface TodosWidgetProps {
 }
 
 const TodosWidget: FC<TodosWidgetProps> = ({ items }) => (
-  <Link href="/todos" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
-    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Todos</h2>
+  <Link href="/todos" className="block rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+    <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Todos</h2>
     {items.length === 0 && <p className="text-sm text-zinc-400">No open todos.</p>}
     {items.length > 0 && (
       <ul className="space-y-1">
         {items.map((todo) => (
-          <li key={todo.id} className="text-sm text-zinc-600 dark:text-zinc-400 flex justify-between">
+          <li key={todo.id} className="flex justify-between text-sm text-zinc-600 dark:text-zinc-400">
             <span>{todo.title}</span>
             {todo.dueDate && <span className="text-xs text-zinc-400">{todo.dueDate}</span>}
           </li>
@@ -34,15 +34,15 @@ interface CalendarWidgetProps {
 }
 
 const CalendarWidget: FC<CalendarWidgetProps> = ({ events }) => (
-  <Link href="/calendar" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
-    <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Today</h2>
+  <Link href="/calendar" className="block rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+    <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Today</h2>
     {events.length === 0 && <p className="text-sm text-zinc-400">Nothing scheduled today.</p>}
     {events.length > 0 && (
       <ul className="space-y-1">
         {events.map((event) => (
-          <li key={event.id} className="text-sm text-zinc-600 dark:text-zinc-400 flex justify-between gap-2">
+          <li key={event.id} className="flex justify-between gap-2 text-sm text-zinc-600 dark:text-zinc-400">
             <span className="truncate">{event.summary}</span>
-            <span className="text-xs text-zinc-400 shrink-0">{formatEventTime(event)}</span>
+            <span className="shrink-0 text-xs text-zinc-400">{formatEventTime(event)}</span>
           </li>
         ))}
       </ul>
@@ -57,8 +57,8 @@ interface FoodWidgetProps {
 const FoodWidget: FC<FoodWidgetProps> = ({ macros }) => {
   const hasData = macros.calories > 0;
   return (
-    <Link href="/food" className="block rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 hover:border-zinc-300 dark:hover:border-zinc-700 transition-colors">
-      <h2 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-3">Food</h2>
+    <Link href="/food" className="block rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+      <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Food</h2>
       {!hasData && <p className="text-sm text-zinc-400">Nothing logged today.</p>}
       {hasData && (
         <div className="space-y-1">
@@ -81,7 +81,7 @@ interface PlaceholderWidgetProps {
 }
 
 const PlaceholderWidget: FC<PlaceholderWidgetProps> = ({ label }) => (
-  <div className="rounded-xl border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 text-zinc-400 text-sm">
+  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900">
     {label} widget coming soon
   </div>
 );
@@ -95,7 +95,7 @@ export default async function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50 mb-6">Dashboard</h1>
+      <h1 className="mb-6 text-2xl font-semibold text-zinc-900 dark:text-zinc-50">Dashboard</h1>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <TodosWidget items={upcomingTodos} />
         <CalendarWidget events={todayEvents} />
