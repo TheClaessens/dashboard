@@ -3,10 +3,12 @@ export const dynamic = "force-dynamic";
 import { type FC } from "react";
 import Link from "next/link";
 import { formatEventTime } from "@/lib/schemas/calendar";
-import { getUpcomingTodos, getTodayCalendarEvents, getTodayMacros } from "@/app/page.utils";
+import { getUpcomingTodos, getTodayCalendarEvents, getTodayMacros, getLatestActivity } from "@/app/page.utils";
+import { deriveForm } from "@/lib/health";
 import type { Todo } from "@/lib/schemas/todo";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
 import type { Macros } from "@/lib/schemas/food";
+import type { Activity } from "@/lib/intervals-icu";
 
 interface TodosWidgetProps {
   items: Todo[];
@@ -76,21 +78,39 @@ const FoodWidget: FC<FoodWidgetProps> = ({ macros }) => {
   );
 };
 
-interface PlaceholderWidgetProps {
-  label: string;
+interface HealthWidgetProps {
+  activity: Activity | null;
 }
 
-const PlaceholderWidget: FC<PlaceholderWidgetProps> = ({ label }) => (
-  <div className="rounded-xl border border-zinc-200 bg-white p-6 text-sm text-zinc-400 dark:border-zinc-800 dark:bg-zinc-900">
-    {label} widget coming soon
-  </div>
+const HealthWidget: FC<HealthWidgetProps> = ({ activity }) => (
+  <Link href="/health" className="block rounded-xl border border-zinc-200 bg-white p-6 transition-colors hover:border-zinc-300 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700">
+    <h2 className="mb-3 text-sm font-semibold text-zinc-900 dark:text-zinc-50">Health</h2>
+    {!activity && <p className="text-sm text-zinc-400">No training data.</p>}
+    {activity && (
+      <div className="flex gap-4">
+        <div>
+          <p className="text-xs text-zinc-400">Fitness</p>
+          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{Math.round(activity.ctl)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-zinc-400">Fatigue</p>
+          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{Math.round(activity.atl)}</p>
+        </div>
+        <div>
+          <p className="text-xs text-zinc-400">Form</p>
+          <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">{Math.round(deriveForm(activity.ctl, activity.atl))}</p>
+        </div>
+      </div>
+    )}
+  </Link>
 );
 
 export default async function DashboardPage() {
-  const [upcomingTodos, todayEvents, todayMacros] = await Promise.all([
+  const [upcomingTodos, todayEvents, todayMacros, latestActivity] = await Promise.all([
     getUpcomingTodos(),
     getTodayCalendarEvents(),
     getTodayMacros(),
+    getLatestActivity(),
   ]);
 
   return (
@@ -100,7 +120,7 @@ export default async function DashboardPage() {
         <TodosWidget items={upcomingTodos} />
         <CalendarWidget events={todayEvents} />
         <FoodWidget macros={todayMacros} />
-        <PlaceholderWidget label="Health" />
+        <HealthWidget activity={latestActivity} />
       </div>
     </div>
   );
