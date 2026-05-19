@@ -29,12 +29,11 @@ export async function getTodayCalendarEvents(): Promise<CalendarEvent[]> {
   }
 }
 
-export async function getLatestActivity(): Promise<Activity | null> {
+export async function getRecentActivities(limit = 30): Promise<Activity[]> {
   try {
-    const activities = await getActivities();
-    return activities[0] ?? null;
+    return await getActivities(limit);
   } catch {
-    return null;
+    return [];
   }
 }
 

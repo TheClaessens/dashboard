@@ -8,7 +8,7 @@ import {
   getUpcomingTodos,
   getTodayCalendarEvents,
   getTodayMacros,
-  getLatestActivity,
+  getRecentActivities,
   getTodayWellness,
 } from "@/app/page.utils";
 import { deriveForm, formatSleepDuration } from "@/lib/health";
@@ -71,15 +71,24 @@ const FoodMacroBar: FC<FoodMacroBarProps> = ({ label, value, goal, color }) => {
 // ── Widgets ───────────────────────────────────────────────────
 
 interface HealthWidgetProps {
-  activity: Activity | null;
+  activities: Activity[];
 }
 
-const HealthWidget: FC<HealthWidgetProps> = ({ activity }) => {
-  const ctl = activity ? Math.round(activity.ctl) : 0;
-  const atl = activity ? Math.round(activity.atl) : 0;
-  const tsb = deriveForm(activity?.ctl ?? 0, activity?.atl ?? 0);
+const HealthWidget: FC<HealthWidgetProps> = ({ activities }) => {
+  const sorted = [...activities].sort((a, b) => a.startDateLocal.localeCompare(b.startDateLocal));
+  const latest = sorted[sorted.length - 1] ?? null;
+  const ctl = latest ? Math.round(latest.ctl) : 0;
+  const atl = latest ? Math.round(latest.atl) : 0;
+  const tsb = deriveForm(latest?.ctl ?? 0, latest?.atl ?? 0);
   const formLabel = deriveFormLabel(tsb);
   const formColor = deriveFormColor(tsb);
+
+  const ctlSeries = sorted.map((a) => a.ctl);
+  const atlSeries = sorted.map((a) => a.atl);
+  const labels = sorted.map((a) => {
+    const d = new Date(a.startDateLocal);
+    return `${d.getDate()}/${d.getMonth() + 1}`;
+  });
 
   return (
     <Widget
@@ -91,14 +100,14 @@ const HealthWidget: FC<HealthWidgetProps> = ({ activity }) => {
       spanRow={2}
       href="/health"
     >
-      <div style={{ display: "flex", gap: 24, marginBottom: 12, marginTop: 4, flexWrap: "wrap" }}>
-        <Stat label="Fitness" value={ctl} hint="CTL" color="var(--m-health)" />
-        <Stat label="Fatigue" value={atl} hint="ATL" />
-        <Stat label="Form" value={Math.round(tsb)} hint={formLabel} color={formColor} />
-        {!activity && <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>No training data.</p>}
-      </div>
-      {activity && (
+      {!latest && <p style={{ fontSize: 13, color: "var(--muted-foreground)", margin: 0 }}>No training data.</p>}
+      {latest && (
         <>
+          <div style={{ display: "flex", gap: 24, marginBottom: 10, marginTop: 4, flexWrap: "wrap" }}>
+            <Stat label="Fitness" value={ctl} hint="CTL" color="var(--m-health)" />
+            <Stat label="Fatigue" value={atl} hint="ATL" />
+            <Stat label="Form" value={Math.round(tsb)} hint={formLabel} color={formColor} />
+          </div>
           <div style={{ fontSize: 11.5, color: "var(--muted-foreground)", marginBottom: 6, display: "flex", gap: 16 }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
               <span className="dot" style={{ background: "var(--m-health)" }} />Fitness (CTL)
@@ -107,13 +116,15 @@ const HealthWidget: FC<HealthWidgetProps> = ({ activity }) => {
               <span className="dot" style={{ background: "var(--m-todos)" }} />Fatigue (ATL)
             </span>
           </div>
-          <AreaChart
-            height={160}
-            series={[
-              { name: "CTL", color: "var(--m-health)", data: [activity.ctl], labels: ["Now"] },
-              { name: "ATL", color: "var(--m-todos)",  data: [activity.atl] },
-            ]}
-          />
+          {ctlSeries.length >= 2 && (
+            <AreaChart
+              height={150}
+              series={[
+                { name: "CTL", color: "var(--m-health)", data: ctlSeries, labels },
+                { name: "ATL", color: "var(--m-todos)",  data: atlSeries },
+              ]}
+            />
+          )}
         </>
       )}
     </Widget>
@@ -345,21 +356,21 @@ const ActivityHeatmapWidget: FC<WeeklyTSSWidgetProps> = ({ activities, todayStr 
 // ── Page ──────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
-  const [upcomingTodos, todayEvents, todayMacros, latestActivity, wellness] = await Promise.all([
+  const [upcomingTodos, todayEvents, todayMacros, recentActivities, wellness] = await Promise.all([
     getUpcomingTodos(),
     getTodayCalendarEvents(),
     getTodayMacros(),
-    getLatestActivity(),
+    getRecentActivities(30),
     getTodayWellness(),
   ]);
 
   const greeting = deriveGreeting();
   const todayStr = new Date().toLocaleDateString("en-CA");
   const today = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  const latestActivity = recentActivities[0] ?? null;
   const tsb = deriveForm(latestActivity?.ctl ?? 0, latestActivity?.atl ?? 0);
   const formLabel = deriveFormLabel(tsb);
   const formColor = deriveFormColor(tsb);
-  const activities = latestActivity ? [latestActivity] : [];
 
   return (
     <div>
@@ -386,14 +397,14 @@ export default async function DashboardPage() {
       </header>
 
       <div className="bento">
-        <HealthWidget activity={latestActivity} />
+        <HealthWidget activities={recentActivities} />
         <FoodWidget macros={todayMacros} />
         <CalendarWidget events={todayEvents} />
         <TodosWidget items={upcomingTodos} />
         <WeightWidget wellness={wellness} />
         <SleepWidget wellness={wellness} />
-        <WeeklyTSSWidget activities={activities} todayStr={todayStr} />
-        <ActivityHeatmapWidget activities={activities} todayStr={todayStr} />
+        <WeeklyTSSWidget activities={recentActivities} todayStr={todayStr} />
+        <ActivityHeatmapWidget activities={recentActivities} todayStr={todayStr} />
         <LatestActivityWidget activity={latestActivity} />
       </div>
     </div>
