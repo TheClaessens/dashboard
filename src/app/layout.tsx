@@ -1,42 +1,37 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
-import Link from "next/link";
+import { Geist_Mono } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { Sidebar } from "@/components/sidebar";
 import "@/styles/globals.css";
 
-const geist = Geist({ subsets: ["latin"], variable: "--font-geist-sans" });
+const jakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Dashboard",
 };
 
-const NAV_LINKS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/todos", label: "Todos" },
-  { href: "/calendar", label: "Calendar" },
-  { href: "/food", label: "Food" },
-  { href: "/health", label: "Health" },
-];
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={`${geist.variable} bg-zinc-50 font-sans dark:bg-black`}>
-        <div className="flex min-h-screen">
-          <nav className="flex w-56 shrink-0 flex-col gap-2 border-r border-zinc-200 p-6 dark:border-zinc-800">
-            {NAV_LINKS.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className="rounded-md px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-100 dark:text-zinc-300 dark:hover:bg-zinc-800"
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
-          <main className="flex-1 p-8">
-            <Providers>{children}</Providers>
-          </main>
+    <html lang="en" className={`dark ${jakartaSans.variable} ${geistMono.variable}`}>
+      <body>
+        <div style={{ display: "flex", minHeight: "100dvh" }}>
+          <Providers>
+            <Sidebar />
+            <main style={{ flex: 1, minWidth: 0, padding: "var(--pad-8)", overflowY: "auto" }}>
+              {children}
+            </main>
+          </Providers>
         </div>
       </body>
     </html>
