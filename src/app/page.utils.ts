@@ -5,11 +5,11 @@ import { sortByDueDate } from "@/lib/schemas/todo";
 import { getCalendarEvents } from "@/lib/google-calendar";
 import { getTodayEvents } from "@/lib/schemas/calendar";
 import { sumMacros } from "@/lib/food";
-import { getActivities } from "@/lib/intervals-icu";
+import { getActivities, getWellness } from "@/lib/intervals-icu";
 import type { Todo } from "@/lib/schemas/todo";
 import type { CalendarEvent } from "@/lib/schemas/calendar";
 import type { Macros } from "@/lib/schemas/food";
-import type { Activity } from "@/lib/intervals-icu";
+import type { Activity, Wellness } from "@/lib/intervals-icu";
 
 export async function getUpcomingTodos(): Promise<Todo[]> {
   const open = await db.select().from(todos).where(isNull(todos.completedAt));
@@ -29,10 +29,18 @@ export async function getTodayCalendarEvents(): Promise<CalendarEvent[]> {
   }
 }
 
-export async function getLatestActivity(): Promise<Activity | null> {
+export async function getRecentActivities(limit = 30): Promise<Activity[]> {
   try {
-    const activities = await getActivities();
-    return activities[0] ?? null;
+    return await getActivities(limit);
+  } catch {
+    return [];
+  }
+}
+
+export async function getTodayWellness(): Promise<Wellness | null> {
+  try {
+    const today = new Date().toLocaleDateString("en-CA");
+    return await getWellness(today);
   } catch {
     return null;
   }

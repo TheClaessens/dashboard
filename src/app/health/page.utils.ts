@@ -13,7 +13,7 @@ export async function getHealthPageData(): Promise<HealthPageData> {
       getActivities(),
       getWellness(today),
     ]);
-    return { activities: activities.slice(0, 10), wellness };
+    return { activities, wellness };
   } catch {
     return { activities: [], wellness: null };
   }
