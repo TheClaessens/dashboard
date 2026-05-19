@@ -285,6 +285,57 @@ export function Heatmap({ weeks = 16, days = 7, values, color = "var(--m-food)",
   );
 }
 
+// ── StackedBar ───────────────────────────────────────────────
+
+interface StackedBarSegment {
+  name: string;
+  value: number;
+  color: string;
+}
+
+interface StackedBarGroup {
+  label: string;
+  segments: StackedBarSegment[];
+}
+
+interface StackedBarProps {
+  groups: StackedBarGroup[];
+  height?: number;
+  gap?: number;
+}
+
+export function StackedBar({ groups, height = 160, gap = 14 }: StackedBarProps) {
+  const totalMax = Math.max(...groups.map((g) => g.segments.reduce((s, x) => s + x.value, 0)), 1);
+  return (
+    <div style={{ display: "flex", alignItems: "flex-end", gap, height: height + 24 }}>
+      {groups.map((g, gi) => {
+        const total = g.segments.reduce((s, x) => s + x.value, 0);
+        const ratio = total / totalMax;
+        const barH = Math.max(2, height * ratio);
+        return (
+          <div key={gi} style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+            <div style={{
+              width: "100%", height: barH, borderRadius: 10, overflow: "hidden",
+              display: "flex", flexDirection: "column", justifyContent: "flex-end",
+              background: "var(--card-2)", border: "1px solid var(--border)",
+            }}>
+              {g.segments.map((seg, i) => {
+                const segH = total === 0 ? 0 : (seg.value / total) * (barH - 2);
+                return (
+                  <div key={i} title={`${seg.name}: ${seg.value}`} style={{
+                    height: segH, background: seg.color, opacity: 0.92,
+                  }} />
+                );
+              })}
+            </div>
+            <div style={{ fontSize: 11, color: "var(--muted-foreground)" }}>{g.label}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── BarChart ─────────────────────────────────────────────────
 
 interface BarChartProps {

@@ -6,6 +6,7 @@ export interface Activity {
   movingTime: number;
   ctl: number;
   atl: number;
+  tss: number | null;
 }
 
 export interface Wellness {
@@ -16,7 +17,8 @@ export interface Wellness {
 }
 
 function baseUrl() {
-  return "https://intervals.icu/api/v1/athlete/0";
+  const id = process.env.INTERVALS_ICU_ATHLETE_ID ?? "0";
+  return `https://intervals.icu/api/v1/athlete/${id}`;
 }
 
 function authHeader(): HeadersInit {
@@ -26,11 +28,14 @@ function authHeader(): HeadersInit {
   };
 }
 
-export async function getActivities(): Promise<Activity[]> {
-  const res = await fetch(`${baseUrl()}/activities`, { headers: authHeader() });
+export async function getActivities(limit = 10): Promise<Activity[]> {
+  const oldest = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toLocaleDateString("en-CA");
+  const newest = new Date().toLocaleDateString("en-CA");
+  const url = `${baseUrl()}/activities?oldest=${oldest}&newest=${newest}`;
+  const res = await fetch(url, { headers: authHeader() });
   if (!res.ok) throw new Error(`Intervals.icu API error: ${res.status}`);
   const data = await res.json() as Record<string, unknown>[];
-  return data.map((a) => ({
+  return data.slice(0, limit).map((a) => ({
     id: String(a.id),
     name: String(a.name),
     type: String(a.type),
@@ -38,6 +43,7 @@ export async function getActivities(): Promise<Activity[]> {
     movingTime: Number(a.moving_time),
     ctl: Number(a.icu_ctl),
     atl: Number(a.icu_atl),
+    tss: a.icu_training_load != null ? Number(a.icu_training_load) : null,
   }));
 }
 
