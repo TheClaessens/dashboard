@@ -5,6 +5,7 @@ import { useFoodLog } from "@/app/food/hooks/useFoodLog";
 import { MacroSummary } from "@/app/food/components/MacroSummary";
 import { MealCard } from "@/app/food/components/MealCard";
 import { AddMealForm } from "@/app/food/components/AddMealForm";
+import { SavedMealsBrowser } from "@/app/food/components/SavedMealsBrowser";
 
 function today() {
   return new Date().toLocaleDateString("en-CA");
@@ -61,6 +62,8 @@ export default function FoodPage() {
           + Add meal
         </button>
       )}
+
+      <SavedMealsBrowser date={date} />
     </div>
   );
 }

@@ -1,4 +1,15 @@
-import type { Macros, FoodItem } from "@/lib/schemas/food";
+import type { Macros, FoodItem, Meal } from "@/lib/schemas/food";
+
+export function deriveSavedMealItems(meal: Meal) {
+  return meal.items.map(({ name, quantity, calories, protein, carbs, fat }) => ({
+    name,
+    defaultQuantity: quantity,
+    calories,
+    protein,
+    carbs,
+    fat,
+  }));
+}
 
 export function scaleMacros(per100g: Macros, quantity: number): Macros {
   const factor = quantity / 100;
