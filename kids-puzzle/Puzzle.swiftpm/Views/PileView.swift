@@ -45,6 +45,12 @@ struct PileView: View {
             swapButton
         }
         .frame(width: layout.size.width, height: layout.size.height)
+        .onChange(of: session.pile) { _, newPile in
+            // A dragged piece that left the pile (re-deal, rotation) must not stay stuck.
+            if let current = active, !current.settling, !newPile.contains(current.piece) {
+                active = nil
+            }
+        }
     }
 
     // MARK: - Pieces of the view
@@ -65,6 +71,7 @@ struct PileView: View {
 
     private var swapButton: some View {
         CircleIconButton(systemName: "arrow.triangle.2.circlepath") {
+            if let current = active, !current.settling { return }
             spin += 180
             withAnimation(.spring(response: 0.45, dampingFraction: 0.8)) {
                 session.swapPile()
@@ -80,7 +87,7 @@ struct PileView: View {
             image: session.pieceImages[item.piece],
             size: pieceSize,
             center: layout.slotCenter(item.slot),
-            hidden: active?.piece == item.piece,
+            isHidden: active?.piece == item.piece,
             onChanged: { value in
                 handleChanged(item, value)
             },
@@ -89,6 +96,9 @@ struct PileView: View {
             },
             onTap: {
                 session.showHint(for: item.piece)
+            },
+            onCancel: {
+                handleCancel(item)
             }
         )
     }
@@ -147,6 +157,18 @@ struct PileView: View {
         }
     }
 
+    /// The drag gesture ended without `onEnded` (system cancel): send the piece home.
+    private func handleCancel(_ item: PileItem) {
+        let piece: Int = item.piece
+        Task { @MainActor in
+            // Give a normal `onEnded` time to run first.
+            _ = try? await Task.sleep(nanoseconds: 150_000_000)
+            if let current = active, current.piece == piece, !current.settling {
+                returnToSlot(item)
+            }
+        }
+    }
+
     private func snap(_ item: PileItem, to target: CGPoint) {
         Sound.snap()
         withAnimation(.spring(response: 0.25, dampingFraction: 0.75)) {
@@ -199,23 +221,29 @@ struct PileSlotView: View {
     let image: UIImage
     let size: CGSize
     let center: CGPoint
-    let hidden: Bool
+    let isHidden: Bool
     let onChanged: (DragGesture.Value) -> Void
     let onEnded: (DragGesture.Value) -> Void
     let onTap: () -> Void
+    let onCancel: () -> Void
+
+    @GestureState private var isDragging: Bool = false
 
     var body: some View {
         Image(uiImage: image)
             .resizable()
             .frame(width: size.width, height: size.height)
             .shadow(color: Color.black.opacity(0.25), radius: 3, x: 0, y: 2)
-            .opacity(hidden ? 0.0 : 1.0)
+            .opacity(isHidden ? 0.0 : 1.0)
             .contentShape(Rectangle())
             .onTapGesture {
                 onTap()
             }
             .gesture(
                 DragGesture(minimumDistance: 3, coordinateSpace: CoordinateSpace.named(Theme.puzzleSpace))
+                    .updating($isDragging) { _, state, _ in
+                        state = true
+                    }
                     .onChanged { value in
                         onChanged(value)
                     }
@@ -223,6 +251,11 @@ struct PileSlotView: View {
                         onEnded(value)
                     }
             )
+            .onChange(of: isDragging) { _, nowDragging in
+                if !nowDragging {
+                    onCancel()
+                }
+            }
             .position(x: center.x, y: center.y)
             .transition(
                 AnyTransition.asymmetric(

@@ -57,7 +57,7 @@ struct BoardView: View {
                 if index < session.pieceImages.count {
                     PlacedPieceView(
                         image: session.pieceImages[index],
-                        frame: pieceFrame(for: index),
+                        rect: pieceFrame(for: index),
                         pop: session.lastPlaced == index
                     )
                 }
@@ -113,14 +113,14 @@ struct BoardView: View {
 /// A piece locked on the board. A freshly placed piece gives a tiny pop.
 struct PlacedPieceView: View {
     let image: UIImage
-    let frame: CGRect
+    let rect: CGRect
     let pop: Bool
 
     @State private var popScale: CGFloat
 
-    init(image: UIImage, frame: CGRect, pop: Bool) {
+    init(image: UIImage, rect: CGRect, pop: Bool) {
         self.image = image
-        self.frame = frame
+        self.rect = rect
         self.pop = pop
         _popScale = State(initialValue: pop ? 1.15 : 1.0)
     }
@@ -128,9 +128,9 @@ struct PlacedPieceView: View {
     var body: some View {
         Image(uiImage: image)
             .resizable()
-            .frame(width: frame.width, height: frame.height)
+            .frame(width: rect.width, height: rect.height)
             .scaleEffect(popScale)
-            .offset(x: frame.minX, y: frame.minY)
+            .offset(x: rect.minX, y: rect.minY)
             .allowsHitTesting(false)
             .onAppear {
                 if pop {

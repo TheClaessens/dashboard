@@ -42,13 +42,12 @@ gets a red x badge (delete, with a confirmation alert), and a check mark button 
 ### A. On the iPad itself with Swift Playgrounds (free)
 
 1. Install **Swift Playgrounds** (4.4 or newer) from the App Store.
-2. Get the `Puzzle.swiftpm` folder onto the iPad: AirDrop it, put it in iCloud Drive, or copy it
+2. Get the `Puzzle.swiftpm` folder onto the iPad: download the repo ZIP from GitHub in Safari and unzip it in Files, AirDrop it, put it in iCloud Drive, or copy it
    through the Files app.
 3. Open it in Files (or from Playgrounds: "Open..."). Playgrounds opens the app package.
 4. Press the play button. The app runs full screen **inside Swift Playgrounds**. It does not
    become a separate home-screen app, and it is not "installed" outside Playgrounds. Your puzzles are
    stored in the app's own sandbox and survive between runs.
-5. Allow photo access when asked (the photo picker itself works without it).
 
 ### B. Mac + Xcode 15 or newer (gives a real home-screen icon)
 

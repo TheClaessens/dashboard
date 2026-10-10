@@ -75,17 +75,26 @@ struct ConfettiParticle {
         var result: [ConfettiParticle] = []
         for _ in 0..<count {
             let width: CGFloat = rng.nextCGFloat(in: 10...20)
+            let x: CGFloat = rng.nextCGFloat(in: 0...1)
+            let delay: Double = rng.nextDouble() * 1.2
+            let duration: Double = 2.4 + rng.nextDouble() * 1.4
+            let heightFactor: CGFloat = rng.nextCGFloat(in: 0.4...0.9)
+            let sway: CGFloat = rng.nextCGFloat(in: 10...50)
+            let swayFreq: Double = 1.5 + rng.nextDouble() * 2.5
+            let spin: Double = 2.0 + rng.nextDouble() * 6.0
+            let phase: Double = rng.nextDouble() * 6.28
+            let colorRoll: Double = rng.nextDouble() * Double(palette.count)
             let particle = ConfettiParticle(
-                x: rng.nextCGFloat(in: 0...1),
-                delay: rng.nextDouble() * 1.2,
-                duration: 2.4 + rng.nextDouble() * 1.4,
+                x: x,
+                delay: delay,
+                duration: duration,
                 width: width,
-                height: width * rng.nextCGFloat(in: 0.4...0.9),
-                swayAmplitude: rng.nextCGFloat(in: 10...50),
-                swayFrequency: 1.5 + rng.nextDouble() * 2.5,
-                spin: 2.0 + rng.nextDouble() * 6.0,
-                phase: rng.nextDouble() * 6.28,
-                colorIndex: Int(rng.nextDouble() * Double(palette.count))
+                height: width * heightFactor,
+                swayAmplitude: sway,
+                swayFrequency: swayFreq,
+                spin: spin,
+                phase: phase,
+                colorIndex: min(Int(colorRoll), palette.count - 1)
             )
             result.append(particle)
         }

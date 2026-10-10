@@ -16,9 +16,6 @@ let package = Package(
             supportedDeviceFamilies: [.pad],
             supportedInterfaceOrientations: [
                 .portrait, .landscapeRight, .landscapeLeft, .portraitUpsideDown(.when(deviceFamilies: [.pad]))
-            ],
-            capabilities: [
-                .photoLibrary(purposeString: "Pick a photo to turn into a puzzle.")
             ]
         )
     ],
