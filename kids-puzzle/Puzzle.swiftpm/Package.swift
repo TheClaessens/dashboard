@@ -13,7 +13,7 @@ let package = Package(
             displayVersion: "1.0",
             bundleVersion: "1",
             accentColor: .presetColor(.orange),
-            supportedDeviceFamilies: [.pad],
+            supportedDeviceFamilies: [.pad, .phone],
             supportedInterfaceOrientations: [
                 .portrait, .landscapeRight, .landscapeLeft, .portraitUpsideDown(.when(deviceFamilies: [.pad]))
             ]
