@@ -1,0 +1,1534 @@
+<title>Puzzle Time</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+/* Layout concept: a sky-blue table with a white board and a deeper-blue tray; big round buttons, almost no text. */
+:root {
+  --table: #bfe3f6;
+  --table-hi: #e3f4fc;
+  --table-lo: #9fd0ea;
+  --board: #ffffff;
+  --tray: #a3d0e9;
+  --tray-edge: rgba(32, 84, 122, 0.2);
+  --sun: #ffc933;
+  --sun-deep: #f5a200;
+  --mint: #6fd3b0;
+  --coral: #ef6a5b;
+  --ink: #27506f;
+  --ink-soft: rgba(39, 80, 111, 0.5);
+  --glass: rgba(255, 255, 255, 0.86);
+  --scrim: rgba(28, 62, 90, 0.82);
+  --shadow: 0 6px 18px rgba(33, 86, 124, 0.24);
+  --shadow-sm: 0 3px 8px rgba(33, 86, 124, 0.22);
+  --font: "Fredoka", "SF Pro Rounded", ui-rounded, "Nunito", system-ui, sans-serif;
+}
+
+html { box-sizing: border-box; height: 100%; overflow: hidden; background: var(--table); }
+body {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: radial-gradient(120% 90% at 15% 0%, var(--table-hi) 0%, var(--table) 55%, var(--table-lo) 140%), var(--table);
+  background-color: var(--table);
+  color: var(--ink);
+  font-family: var(--font);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+}
+*, *::before, *::after { box-sizing: border-box; }
+button { font: inherit; color: inherit; }
+svg { display: block; }
+
+#app { --d: 60px; height: 100%; width: 100%; padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+#app.small { --d: 44px; }
+#stage { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.screen { position: absolute; inset: 0; animation: screenIn 0.25s ease-out; }
+@keyframes screenIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Round icon buttons */
+.rbtn {
+  display: grid;
+  place-items: center;
+  width: var(--d);
+  height: var(--d);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--glass);
+  color: var(--ink);
+  box-shadow: var(--shadow-sm), inset 0 0 0 1px rgba(39, 80, 111, 0.06);
+  cursor: pointer;
+  transition: transform 0.12s ease-out, opacity 0.2s;
+}
+.rbtn svg { width: 46%; height: 46%; fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+.rbtn:active { transform: scale(0.92); }
+.rbtn:focus-visible, .sz:focus-visible, .card button:focus-visible { outline: 3px solid var(--sun-deep); outline-offset: 3px; }
+.rbtn.go { background: var(--sun); color: var(--ink); }
+.rbtn.go[disabled] { opacity: 0.45; pointer-events: none; }
+.rbtn.danger { background: var(--coral); color: #fff; }
+
+/* ---------- Shelf ---------- */
+#shelf .scroll { position: absolute; inset: 0; overflow-y: auto; overflow-x: hidden; padding: 84px 20px 36px; touch-action: pan-y; -webkit-overflow-scrolling: touch; }
+#grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 150px), 1fr)); gap: 16px; max-width: 1240px; margin: 0 auto; }
+@media (min-width: 700px) {
+  #shelf .scroll { padding: 96px 32px 40px; }
+  #grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 28px; }
+}
+.card { position: relative; aspect-ratio: 3 / 2; border-radius: 26px; box-shadow: var(--shadow); background: var(--board); animation: pop 0.35s cubic-bezier(0.3, 1.5, 0.5, 1) both; }
+@keyframes pop { from { transform: scale(0.88); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.card .open { position: absolute; inset: 0; width: 100%; padding: 0; border: 5px solid var(--board); border-radius: inherit; overflow: hidden; background: var(--board); cursor: pointer; transition: transform 0.12s ease-out; }
+.card .open:active { transform: scale(0.97); }
+.card .open img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 20px; pointer-events: none; }
+.badge { position: absolute; right: 12px; bottom: 12px; width: 52px; height: 52px; border-radius: 50%; background: var(--board); box-shadow: var(--shadow-sm); display: grid; place-items: center; pointer-events: none; }
+.badge svg { width: 52px; height: 52px; }
+.badge.star { background: var(--sun); }
+.badge.star svg { width: 30px; height: 30px; fill: var(--board); stroke: var(--sun-deep); stroke-width: 1.6; stroke-linejoin: round; }
+.ring-track { fill: none; stroke: rgba(39, 80, 111, 0.14); stroke-width: 6; }
+.ring-val { fill: none; stroke: var(--sun-deep); stroke-width: 6; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 26px 26px; }
+.card.add .open { border: 4px dashed var(--ink-soft); background: rgba(255, 255, 255, 0.45); display: grid; place-items: center; color: var(--ink); box-shadow: none; }
+.card.add { box-shadow: none; background: transparent; }
+.card.add svg { width: 44px; height: 44px; fill: none; stroke: currentColor; stroke-width: 3; stroke-linecap: round; }
+.card .del { position: absolute; top: -10px; right: -10px; z-index: 2; width: 44px; height: 44px; animation: pop 0.3s cubic-bezier(0.3, 1.6, 0.5, 1) both; }
+.card .confirm { position: absolute; inset: 0; z-index: 3; display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px; border-radius: inherit; background: var(--scrim); color: #fff; font-weight: 600; font-size: 20px; }
+.card.asking .confirm { display: flex; }
+.confirm .row { display: flex; gap: 16px; }
+.confirm .rbtn { --d: 52px; }
+
+#lock { position: absolute; top: calc(14px); right: 16px; z-index: 5; --d: 52px; opacity: 0.8; touch-action: none; }
+#lock .ring { position: absolute; inset: -5px; width: calc(100% + 10px); height: calc(100% + 10px); pointer-events: none; }
+#lock .ring svg { width: 100%; height: 100%; stroke-width: 0; fill: none; }
+#lock .ring circle { fill: none; stroke: var(--sun-deep); stroke-width: 4; stroke-linecap: round; transform: rotate(-90deg); transform-origin: 50% 50%; }
+#parent-ok { position: absolute; top: 14px; right: 16px; z-index: 5; --d: 56px; }
+
+/* ---------- New puzzle ---------- */
+#newp { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+#np-close { position: absolute; top: 14px; left: 16px; z-index: 5; }
+#np-ok { position: absolute; top: 14px; right: 16px; z-index: 5; }
+.np-frame { position: relative; width: 600px; height: 400px; border-radius: 22px; overflow: hidden; background: var(--board); box-shadow: var(--shadow); touch-action: none; cursor: grab; }
+.np-frame canvas { position: absolute; left: 0; top: 0; display: block; pointer-events: none; transform-origin: 0 0; }
+.np-pick { position: absolute; inset: 0; display: grid; place-items: center; cursor: pointer; background: rgba(255, 255, 255, 0.55); border: 4px dashed var(--ink-soft); border-radius: 22px; color: var(--ink); }
+.np-pick svg { width: 72px; height: 72px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.np-swap { position: absolute; left: 12px; bottom: 12px; --d: 48px; }
+.np-swap svg { width: 55%; height: 55%; }
+.np-file { position: absolute; width: 1px; height: 1px; opacity: 0; overflow: hidden; pointer-events: none; }
+.sizes { display: flex; gap: 12px; align-items: stretch; justify-content: center; }
+.sz { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-width: 88px; padding: 10px 12px; border: 0; border-radius: 20px; background: var(--glass); box-shadow: var(--shadow-sm); cursor: pointer; font-weight: 600; font-size: 22px; line-height: 1; transition: transform 0.12s ease-out, background 0.15s; }
+.sz:active { transform: scale(0.95); }
+.sz svg { width: 52px; height: 35px; }
+.sz svg rect { fill: var(--board); stroke: var(--ink); stroke-width: 1.6; }
+.sz svg path { stroke: var(--ink-soft); stroke-width: 1; fill: none; }
+.sz.sel { background: var(--sun); box-shadow: var(--shadow-sm), 0 0 0 3px var(--board); }
+.sz.sel svg path { stroke: var(--ink); }
+.sz small { font-size: 12px; font-weight: 500; opacity: 0.8; letter-spacing: 0.02em; }
+.sz.try { min-width: 74px; font-size: 18px; background: rgba(255, 255, 255, 0.55); }
+.sz.try.sel { background: var(--sun); }
+#app.small .sz { min-width: 66px; padding: 6px 8px; font-size: 18px; border-radius: 16px; }
+#app.small .sz svg { width: 40px; height: 27px; }
+#app.small .sizes { gap: 8px; }
+
+/* ---------- Puzzle ---------- */
+#puzzle { touch-action: none; }
+#p-board { position: absolute; border-radius: 14px; background: var(--board); box-shadow: 0 8px 24px rgba(33, 86, 124, 0.25), inset 0 0 0 1px rgba(39, 80, 111, 0.08); overflow: hidden; }
+#p-ghost { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0.25; transition: opacity 0.3s; pointer-events: none; }
+#p-tray { position: absolute; border-radius: 28px; background: var(--tray); box-shadow: inset 0 3px 8px var(--tray-edge), inset 0 0 0 1px var(--tray-edge); }
+#app.small #p-tray { border-radius: 18px; }
+#app.small #p-board { border-radius: 8px; }
+#p-bar { position: absolute; border-radius: 99px; background: rgba(255, 255, 255, 0.55); overflow: hidden; }
+#p-fill { display: block; height: 100%; width: 0; border-radius: 99px; background: linear-gradient(90deg, var(--sun), var(--sun-deep)); transition: width 0.5s ease-out; }
+#p-cv { position: absolute; left: 0; top: 0; width: 100%; height: 100%; touch-action: none; }
+#puzzle .rbtn { position: absolute; z-index: 5; }
+#p-tray, #p-swap, #p-eye { transition: opacity 0.6s; }
+#puzzle.finished #p-tray, #puzzle.finished #p-swap, #puzzle.finished #p-eye { opacity: 0; pointer-events: none; }
+#p-swap svg { transition: transform 0.5s cubic-bezier(0.3, 1.4, 0.5, 1); }
+#p-fin { position: absolute; inset: 0; z-index: 20; cursor: pointer; }
+#p-fin .fin-img { position: absolute; border-radius: 14px; background-size: 100% 100%; box-shadow: 0 8px 24px rgba(33, 86, 124, 0.25); opacity: 0; transition: opacity 1s ease-in-out; }
+#p-fin .fin-img.show { opacity: 1; }
+#p-fin canvas { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#p-fin .fin-star { position: absolute; display: grid; place-items: center; transform: scale(0); filter: drop-shadow(0 10px 14px rgba(20, 60, 90, 0.4)); pointer-events: none; }
+#p-fin .fin-star.show { animation: starIn 1s cubic-bezier(0.2, 0.9, 0.3, 1) forwards, wiggle 1.4s ease-in-out 1s infinite alternate; }
+#p-fin .fin-star svg { width: 100%; height: 100%; fill: var(--sun); stroke: var(--sun-deep); stroke-width: 1; stroke-linejoin: round; }
+@keyframes starIn { 0% { transform: scale(0) rotate(-40deg); } 45% { transform: scale(1.3) rotate(8deg); } 65% { transform: scale(0.88) rotate(-4deg); } 82% { transform: scale(1.08) rotate(2deg); } 100% { transform: scale(1) rotate(0); } }
+@keyframes wiggle { from { transform: scale(1) rotate(-5deg); } to { transform: scale(1.04) rotate(5deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .screen, .card, .card .del { animation: none; }
+  #p-fill, #p-ghost, #p-swap svg { transition: none; }
+}
+</style>
+
+<div id="app">
+  <div id="stage">
+
+    <section id="shelf" class="screen" hidden>
+      <div class="scroll"><div id="grid"></div></div>
+      <button id="lock" class="rbtn" aria-label="Hold to open parent mode">
+        <svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        <span class="ring"><svg viewBox="0 0 60 60"><circle id="lock-ring" cx="30" cy="30" r="27"/></svg></span>
+      </button>
+      <button id="parent-ok" class="rbtn go" aria-label="Done" hidden>
+        <svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </button>
+    </section>
+
+    <section id="newp" class="screen" hidden>
+      <button id="np-close" class="rbtn" aria-label="Cancel"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button id="np-ok" class="rbtn go" aria-label="Create" disabled><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
+      <div id="np-frame" class="np-frame">
+        <canvas id="np-cv"></canvas>
+        <label id="np-pick" class="np-pick" for="np-file" aria-label="Pick a photo">
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.7"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
+        </label>
+        <label id="np-swap" class="rbtn np-swap" for="np-file" aria-label="Pick another photo" hidden>
+          <svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.7"/><path d="M4 17l5-4.5 4 3.5 3-2.5 4 3.5"/></svg>
+        </label>
+      </div>
+      <input id="np-file" class="np-file" type="file" accept="image/*">
+      <div id="np-sizes" class="sizes"></div>
+    </section>
+
+    <section id="puzzle" class="screen" hidden>
+      <div id="p-board"><img id="p-ghost" alt=""></div>
+      <div id="p-tray"></div>
+      <div id="p-bar"><i id="p-fill"></i></div>
+      <canvas id="p-cv"></canvas>
+      <button id="p-home" class="rbtn" aria-label="Home"><svg viewBox="0 0 24 24"><path d="M3 11.5L12 4l9 7.5"/><path d="M5.5 10v9.5h13V10"/><path d="M10 19.5v-5h4v5"/></svg></button>
+      <button id="p-eye" class="rbtn" aria-label="Show or hide the picture"><svg id="p-eye-svg" viewBox="0 0 24 24"></svg></button>
+      <button id="p-swap" class="rbtn" aria-label="Deal new pieces"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.6-5.9"/><path d="M20 4v5h-5"/></svg></button>
+      <div id="p-fin" hidden></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =====================================================================
+   * Basics
+   * ===================================================================== */
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var IMG_W = 1800, IMG_H = 1200;
+  var SIZES = [
+    { n: 24, rows: 4, cols: 6, tryout: true },
+    { n: 104, rows: 8, cols: 13 },
+    { n: 150, rows: 10, cols: 15 },
+    { n: 187, rows: 11, cols: 17 }
+  ];
+  var app = $('#app'), stage = $('#stage');
+  var dpr = Math.min(window.devicePixelRatio || 1, 3);
+
+  function cssVar(name, fallback) {
+    try { var v = getComputedStyle(document.documentElement).getPropertyValue(name).trim(); return v || fallback; }
+    catch (e) { return fallback; }
+  }
+  var COLORS = {
+    sun: cssVar('--sun', '#ffc933'),
+    sunDeep: cssVar('--sun-deep', '#f5a200'),
+    ink: cssVar('--ink', '#27506f')
+  };
+
+  function mulberry32(a) {
+    return function () {
+      a |= 0; a = (a + 0x6D2B79F5) | 0;
+      var t = Math.imul(a ^ (a >>> 15), 1 | a);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function randomSeed() {
+    try { var a = new Uint32Array(1); crypto.getRandomValues(a); return a[0]; } catch (e) { return (Math.random() * 4294967296) >>> 0; }
+  }
+  function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+  function lerp(a, b, t) { return a + (b - a) * t; }
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function smooth(t) { t = clamp(t, 0, 1); return t * t * (3 - 2 * t); }
+  function withTimeout(p, ms) {
+    return new Promise(function (res, rej) {
+      var timer = setTimeout(function () { rej(new Error('timeout')); }, ms);
+      p.then(function (v) { clearTimeout(timer); res(v); }, function (e) { clearTimeout(timer); rej(e); });
+    });
+  }
+  function makeCanvas(w, h) { var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; }
+  function loadImage(src) {
+    return new Promise(function (res, rej) {
+      var im = new Image();
+      im.onload = function () { res(im); };
+      im.onerror = function () { rej(new Error('image')); };
+      im.src = src;
+    });
+  }
+  function toJpeg(cv, q) { try { return cv.toDataURL('image/jpeg', q); } catch (e) { return null; } }
+
+  /* =====================================================================
+   * Icons
+   * ===================================================================== */
+  var STAR_PATH = 'M12 2.4l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.5l-6 3.3 1.3-6.7-5-4.7 6.8-.8z';
+  var ICON_EYE = '<path d="M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>';
+  var ICON_EYE_OFF = ICON_EYE + '<path d="M4 4l16 16"/>';
+  var ICON_CHECK = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  var ICON_CLOSE = '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+  var ICON_PLUS = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>';
+
+  /* =====================================================================
+   * Storage (IndexedDB, every access guarded; the app works without it)
+   * ===================================================================== */
+  var store = {
+    db: null,
+    images: {},
+    open: function () {
+      var self = this;
+      return withTimeout(new Promise(function (res, rej) {
+        var rq = window.indexedDB.open('puzzle-time', 1);
+        rq.onupgradeneeded = function () {
+          var d = rq.result;
+          d.createObjectStore('puzzles', { keyPath: 'id' });
+          d.createObjectStore('images', { keyPath: 'id' });
+        };
+        rq.onsuccess = function () { res(rq.result); };
+        rq.onerror = function () { rej(rq.error); };
+        rq.onblocked = function () { rej(new Error('blocked')); };
+      }), 2500).then(function (db) { self.db = db; }, function () { self.db = null; });
+    },
+    op: function (name, mode, fn) {
+      var self = this;
+      return new Promise(function (res) {
+        try {
+          if (!self.db) { res(undefined); return; }
+          var t = self.db.transaction(name, mode);
+          var rq = fn(t.objectStore(name));
+          t.oncomplete = function () { res(rq ? rq.result : true); };
+          t.onerror = t.onabort = function () { res(undefined); };
+        } catch (e) { res(undefined); }
+      });
+    },
+    loadAll: function () { return this.op('puzzles', 'readonly', function (s) { return s.getAll(); }).then(function (r) { return Array.isArray(r) ? r : []; }); },
+    putMeta: function (rec) {
+      var copy = {
+        id: rec.id, rows: rec.rows, cols: rec.cols, seed: rec.seed, placed: rec.placed.slice(),
+        done: !!rec.done, sample: !!rec.sample, created: rec.created, thumb: rec.thumb
+      };
+      return this.op('puzzles', 'readwrite', function (s) { return s.put(copy); });
+    },
+    putImage: function (id, data) { this.images[id] = data; return this.op('images', 'readwrite', function (s) { return s.put({ id: id, data: data }); }); },
+    getImage: function (id) {
+      var self = this;
+      if (this.images[id]) return Promise.resolve(this.images[id]);
+      return this.op('images', 'readonly', function (s) { return s.get(id); }).then(function (r) {
+        if (r && r.data) { self.images[id] = r.data; return r.data; }
+        return null;
+      });
+    },
+    remove: function (id) {
+      delete this.images[id];
+      var a = this.op('puzzles', 'readwrite', function (s) { return s.delete(id); });
+      var b = this.op('images', 'readwrite', function (s) { return s.delete(id); });
+      return Promise.all([a, b]);
+    }
+  };
+
+  var puzzles = [];
+
+  /* =====================================================================
+   * Audio (created lazily on the first pointerdown)
+   * ===================================================================== */
+  var actx = null;
+  function ensureAudio() {
+    try {
+      if (!actx) {
+        var AC = window.AudioContext || window.webkitAudioContext;
+        if (AC) actx = new AC();
+      }
+      if (actx && actx.state === 'suspended') actx.resume();
+    } catch (e) { actx = null; }
+  }
+  window.addEventListener('pointerdown', ensureAudio, true);
+  window.addEventListener('pointerup', function () { if (actx && actx.state === 'suspended') ensureAudio(); }, true);
+  window.addEventListener('touchend', function () { if (actx && actx.state === 'suspended') ensureAudio(); }, true);
+
+  function tone(freq, start, dur, type, peak, endFreq) {
+    var o = actx.createOscillator(), g = actx.createGain();
+    o.type = type;
+    o.frequency.setValueAtTime(freq, start);
+    if (endFreq) o.frequency.exponentialRampToValueAtTime(endFreq, start + dur * 0.6);
+    g.gain.setValueAtTime(0.0001, start);
+    g.gain.exponentialRampToValueAtTime(peak, start + 0.008);
+    g.gain.exponentialRampToValueAtTime(0.0001, start + dur);
+    o.connect(g); g.connect(actx.destination);
+    o.start(start); o.stop(start + dur + 0.05);
+  }
+  function playTock() {
+    try {
+      if (!actx || actx.state !== 'running') return;
+      var t = actx.currentTime;
+      tone(520, t, 0.11, 'sine', 0.32, 190);
+      tone(1040, t, 0.05, 'triangle', 0.08, 500);
+    } catch (e) { /* sound is optional */ }
+  }
+  function playChime() {
+    try {
+      if (!actx || actx.state !== 'running') return;
+      var t = actx.currentTime + 0.02;
+      var notes = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1567.98];
+      for (var i = 0; i < notes.length; i++) {
+        tone(notes[i], t + i * 0.12, 0.9, 'triangle', 0.2);
+        tone(notes[i] * 2, t + i * 0.12, 0.5, 'sine', 0.05);
+      }
+    } catch (e) { /* sound is optional */ }
+  }
+
+  /* =====================================================================
+   * Sample art: a cheerful 2400x1600 scene drawn with Canvas
+   * ===================================================================== */
+  function drawSampleArt(ctx) {
+    var W = 2400, H = 1600, PI = Math.PI;
+    function col(hex, a) { return 'rgba(' + ((hex >> 16) & 255) + ',' + ((hex >> 8) & 255) + ',' + (hex & 255) + ',' + (a === undefined ? 1 : a) + ')'; }
+    function oval(x, y, w, h, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.ellipse(x + w / 2, y + h / 2, w / 2, h / 2, 0, 0, PI * 2); ctx.fill(); }
+    function rect(x, y, w, h, c) { ctx.fillStyle = c; ctx.fillRect(x, y, w, h); }
+    function poly(pts, c) { ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]); for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0], pts[i][1]); ctx.closePath(); ctx.fill(); }
+    function line(ax, ay, bx, by, w, c) { ctx.strokeStyle = c; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx, by); ctx.stroke(); }
+    var rng = mulberry32(2024);
+
+    // Sky
+    rect(0, 0, W, H, col(0xFFF0C9));
+    var gr = ctx.createLinearGradient(0, 0, 0, 1150);
+    gr.addColorStop(0, col(0x62B8EE)); gr.addColorStop(0.55, col(0xB5E3FA)); gr.addColorStop(1, col(0xFFF0C9));
+    ctx.fillStyle = gr; ctx.fillRect(0, 0, W, H);
+
+    // Sun
+    var sx = 2050, sy = 300;
+    oval(sx - 270, sy - 270, 540, 540, col(0xFFF3B0, 0.35));
+    for (var i = 0; i < 16; i++) {
+      var an = i * (PI * 2 / 16), outer = i % 2 === 0 ? 305 : 250;
+      line(sx + Math.cos(an) * 185, sy + Math.sin(an) * 185, sx + Math.cos(an) * outer, sy + Math.sin(an) * outer, 22, col(0xFFC83D));
+    }
+    oval(sx - 150, sy - 150, 300, 300, col(0xFFC83D));
+    oval(sx - 128, sy - 128, 256, 256, col(0xFFE066));
+    oval(sx - 55, sy - 40, 24, 34, col(0x8A4B08));
+    oval(sx + 31, sy - 40, 24, 34, col(0x8A4B08));
+    ctx.strokeStyle = col(0x8A4B08); ctx.lineWidth = 12; ctx.lineCap = 'round';
+    ctx.beginPath(); ctx.arc(sx, sy + 5, 62, PI * 0.2, PI * 0.8, false); ctx.stroke();
+    oval(sx - 100, sy + 10, 40, 28, col(0xFF9E7A, 0.55));
+    oval(sx + 60, sy + 10, 40, 28, col(0xFF9E7A, 0.55));
+
+    // Rainbow
+    var rb = [0xE5383B, 0xF77F00, 0xFCCB16, 0x57CC5B, 0x3A9AD9, 0x5B5BD6, 0x9B5DE5];
+    for (i = 0; i < rb.length; i++) {
+      ctx.strokeStyle = col(rb[i]); ctx.lineWidth = 27; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.arc(640, 1150, 560 - i * 26, PI, PI * 2, false); ctx.stroke();
+    }
+
+    // Clouds
+    function cloud(cx, cy, s) {
+      var w = 'rgba(255,255,255,0.95)';
+      oval(cx - 120 * s, cy - 30 * s, 240 * s, 80 * s, w);
+      oval(cx - 80 * s, cy - 70 * s, 110 * s, 100 * s, w);
+      oval(cx - 10 * s, cy - 90 * s, 130 * s, 120 * s, w);
+      oval(cx + 50 * s, cy - 50 * s, 100 * s, 90 * s, w);
+    }
+    cloud(330, 210, 1.3); cloud(930, 150, 1.0); cloud(1450, 250, 1.4); cloud(2180, 700, 1.1); cloud(120, 520, 0.8); cloud(1780, 90, 0.7);
+
+    // Birds
+    function bird(cx, cy, s) {
+      ctx.strokeStyle = col(0x3D405B); ctx.lineWidth = 7; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.moveTo(cx - 34 * s, cy);
+      ctx.quadraticCurveTo(cx - 18 * s, cy - 18 * s, cx, cy + 10 * s);
+      ctx.quadraticCurveTo(cx + 18 * s, cy - 18 * s, cx + 34 * s, cy);
+      ctx.stroke();
+    }
+    bird(1650, 360, 1.2); bird(1770, 440, 0.9); bird(1540, 470, 1.0); bird(780, 230, 1.0); bird(880, 300, 0.8);
+
+    // Kite
+    var kx = 1500, ky = 560;
+    poly([[kx, ky], [kx + 70, ky + 90], [kx, ky + 220], [kx - 70, ky + 90]], col(0xEF476F));
+    poly([[kx, ky], [kx + 70, ky + 90], [kx, ky + 90]], col(0xFFD166));
+    poly([[kx, ky + 90], [kx - 70, ky + 90], [kx, ky + 220]], col(0x06D6A0));
+    ctx.strokeStyle = col(0x5C4033); ctx.lineWidth = 5; ctx.lineCap = 'butt';
+    ctx.beginPath(); ctx.moveTo(kx, ky + 220);
+    ctx.quadraticCurveTo(kx + 70, ky + 270, kx - 60, ky + 340);
+    ctx.quadraticCurveTo(kx - 120, ky + 390, kx + 10, ky + 440);
+    ctx.stroke();
+    oval(kx - 76, ky + 330, 32, 20, col(0x118AB2));
+    oval(kx - 20, ky + 395, 32, 20, col(0xFFD166));
+
+    // Hills
+    function hillY(x, base, amp, freq, ph) { return base + amp * Math.sin(x * freq + ph) + amp * 0.35 * Math.sin(x * freq * 2.3 + ph * 1.7); }
+    function hill(base, amp, freq, ph, c) {
+      ctx.fillStyle = c; ctx.beginPath(); ctx.moveTo(0, H);
+      for (var x = 0; x <= W; x += 12) ctx.lineTo(x, hillY(x, base, amp, freq, ph));
+      ctx.lineTo(W, H); ctx.closePath(); ctx.fill();
+    }
+    function stripes(base, amp, freq, ph, count, spacing, c) {
+      for (var k = 1; k <= count; k++) {
+        ctx.strokeStyle = c; ctx.lineWidth = 9 + k; ctx.lineCap = 'butt'; ctx.beginPath();
+        for (var x = 0; x <= W; x += 12) { var y = hillY(x, base, amp, freq, ph) + k * spacing; if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); }
+        ctx.stroke();
+      }
+    }
+    hill(1000, 70, 0.0030, 0.4, col(0x9AD98A));
+    hill(1135, 80, 0.0035, 1.0, col(0x6CC067));
+    stripes(1135, 80, 0.0035, 1.0, 4, 38, col(0x5BB058, 0.55));
+    hill(1340, 70, 0.0028, 2.2, col(0x45A94E));
+    stripes(1340, 70, 0.0028, 2.2, 6, 40, col(0x3A9A45, 0.6));
+
+    // Trees
+    function tree(x, by, s) {
+      rect(x - 16 * s, by - 130 * s, 32 * s, 130 * s, col(0x8B5A2B));
+      oval(x - 90 * s, by - 250 * s, 180 * s, 160 * s, col(0x2E8B3D));
+      oval(x - 60 * s, by - 300 * s, 140 * s, 140 * s, col(0x3FA34D));
+      oval(x - 10 * s, by - 250 * s, 110 * s, 110 * s, col(0x4FB85C));
+      var ap = col(0xE63946);
+      oval(x - 55 * s, by - 200 * s, 22 * s, 22 * s, ap);
+      oval(x + 30 * s, by - 230 * s, 22 * s, 22 * s, ap);
+      oval(x - 5 * s, by - 160 * s, 22 * s, 22 * s, ap);
+    }
+    tree(1130, 1170, 1.0); tree(1290, 1195, 0.7); tree(2170, 1175, 1.25);
+
+    // House
+    var roofRed = col(0xD64545), roofDark = col(0xB53030);
+    rect(1800, 790, 56, 130, roofDark);
+    rect(1792, 780, 72, 20, col(0x8F2323));
+    rect(1500, 940, 400, 270, col(0xFFF8F0));
+    rect(1500, 940 + 270 - 24, 400, 24, col(0xE9DCCB));
+    poly([[1460, 948], [1700, 760], [1940, 948]], roofRed);
+    rect(1460, 936, 480, 24, roofDark);
+    oval(1670, 850, 60, 60, '#fff');
+    oval(1680, 860, 40, 40, col(0x8FD3F4));
+    rect(1665, 1055, 70, 155, roofRed);
+    oval(1715, 1130, 12, 12, col(0xFFD166));
+    var wins = [[1540, 1010], [1776, 1010]];
+    wins.forEach(function (w) {
+      rect(w[0] - 8, w[1] - 8, 100, 100, roofRed);
+      rect(w[0], w[1], 84, 84, col(0x8FD3F4));
+      rect(w[0] + 39, w[1], 6, 84, '#fff');
+      rect(w[0], w[1] + 39, 84, 6, '#fff');
+      rect(w[0] - 8, w[1] + 92, 100, 18, col(0x8B5A2B));
+      oval(w[0], w[1] + 80, 22, 22, col(0xFF70A6));
+      oval(w[0] + 30, w[1] + 80, 22, 22, col(0xFFD166));
+      oval(w[0] + 60, w[1] + 80, 22, 22, col(0xFF70A6));
+    });
+
+    // Balloons
+    function balloon(cx, cy, rx, c) {
+      var ry = rx * 1.25, tie = cy + ry;
+      ctx.strokeStyle = 'rgba(74,74,74,0.7)'; ctx.lineWidth = 4; ctx.lineCap = 'butt';
+      ctx.beginPath(); ctx.moveTo(cx, tie + 16); ctx.quadraticCurveTo(cx - 60, tie + 150, cx + 30, tie + 330); ctx.stroke();
+      oval(cx - rx, cy - ry, rx * 2, ry * 2, c);
+      poly([[cx, tie - 4], [cx - 12, tie + 18], [cx + 12, tie + 18]], c);
+      oval(cx - rx * 0.6, cy - ry * 0.65, rx * 0.45, ry * 0.4, 'rgba(255,255,255,0.5)');
+    }
+    balloon(1010, 430, 62, col(0xE63946)); balloon(1150, 330, 70, col(0xFFD23F)); balloon(1290, 470, 58, col(0x3A86FF));
+    balloon(330, 340, 66, col(0x2EC4B6)); balloon(520, 250, 60, col(0xFF70A6)); balloon(2230, 880, 64, col(0xB5179E)); balloon(150, 820, 56, col(0xFF9F1C));
+
+    // Dirt path
+    ctx.fillStyle = col(0xF1DDB0); ctx.beginPath();
+    ctx.moveTo(1668, 1210); ctx.lineTo(1735, 1210);
+    ctx.quadraticCurveTo(1740, 1400, 2020, 1600); ctx.lineTo(1380, 1600);
+    ctx.quadraticCurveTo(1660, 1400, 1668, 1210); ctx.closePath(); ctx.fill();
+    var peb = col(0xD9C294);
+    oval(1690, 1290, 30, 18, peb); oval(1650, 1380, 36, 20, peb); oval(1740, 1430, 28, 16, peb); oval(1600, 1510, 40, 22, peb); oval(1760, 1540, 34, 18, peb);
+
+    // Flowers
+    function flower(cx, cy, r, petals) {
+      for (var k = 0; k < 5; k++) {
+        var a = k * (PI * 2 / 5);
+        oval(cx + Math.cos(a) * r * 0.7 - r * 0.5, cy + Math.sin(a) * r * 0.7 - r * 0.5, r, r, petals);
+      }
+      oval(cx - r * 0.38, cy - r * 0.38, r * 0.76, r * 0.76, col(0xFFD23F));
+    }
+    var fh = [0xFF70A6, 0xFFFFFF, 0xB388EB, 0xFF4D6D, 0xFFB703, 0x74C0FC], placed = 0;
+    while (placed < 120) {
+      var fx = rng() * 2400, fy = 1300 + rng() * 285;
+      if (fx > 1400 && fx < 2040 && fy > 1250) continue;
+      var fr = 11 + rng() * 11, pick = Math.min(Math.floor(rng() * fh.length), fh.length - 1);
+      flower(fx, fy, fr, col(fh[pick]));
+      placed++;
+    }
+    for (i = 0; i < 14; i++) flower(80 + i * 70, 1230 + ((i * 37) % 60), 14, col(fh[i % fh.length]));
+  }
+
+  function renderSampleCanvas() {
+    var cv = makeCanvas(IMG_W, IMG_H), ctx = cv.getContext('2d');
+    ctx.scale(IMG_W / 2400, IMG_H / 1600);
+    drawSampleArt(ctx);
+    return cv;
+  }
+
+  /* =====================================================================
+   * Puzzle records
+   * ===================================================================== */
+  function makeThumb(cv) {
+    var t = makeCanvas(480, 320), c = t.getContext('2d');
+    c.imageSmoothingQuality = 'high';
+    c.drawImage(cv, 0, 0, 480, 320);
+    return toJpeg(t, 0.8);
+  }
+  function addPuzzle(cv, size, isSample) {
+    var data = toJpeg(cv, 0.86);
+    if (!data) return Promise.resolve(null);
+    var rec = {
+      id: 'p' + Date.now().toString(36) + Math.floor(Math.random() * 1e6).toString(36),
+      rows: size.rows, cols: size.cols, seed: randomSeed(), placed: [], done: false,
+      sample: !!isSample, created: Date.now(), thumb: makeThumb(cv)
+    };
+    puzzles.unshift(rec);
+    return Promise.all([store.putImage(rec.id, data), store.putMeta(rec)]).then(function () { return rec; });
+  }
+  function saveProgress(rec) { try { store.putMeta(rec); } catch (e) { /* storage optional */ } }
+
+  function fraction(rec) { return rec.done ? 1 : rec.placed.length / (rec.rows * rec.cols); }
+
+  /* =====================================================================
+   * Screens
+   * ===================================================================== */
+  var screen = 'shelf';
+  var parentMode = false;
+  var screens = { shelf: $('#shelf'), newp: $('#newp'), puzzle: $('#puzzle') };
+  function showScreen(name) {
+    screen = name;
+    Object.keys(screens).forEach(function (k) { screens[k].hidden = k !== name; });
+    onResize();
+  }
+
+  /* =====================================================================
+   * Shelf
+   * ===================================================================== */
+  var RING_C = 2 * Math.PI * 20;
+  function renderShelf() {
+    var grid = $('#grid');
+    grid.textContent = '';
+    if (parentMode) {
+      var add = document.createElement('div');
+      add.className = 'card add';
+      add.innerHTML = '<button class="open" aria-label="New puzzle">' + ICON_PLUS + '</button>';
+      add.firstChild.addEventListener('click', openNew);
+      grid.appendChild(add);
+    }
+    puzzles.forEach(function (rec) {
+      var card = document.createElement('div');
+      card.className = 'card';
+      card.dataset.id = rec.id;
+      var frac = fraction(rec);
+      var badge = rec.done
+        ? '<span class="badge star"><svg viewBox="0 0 24 24"><path d="' + STAR_PATH + '"/></svg></span>'
+        : '<span class="badge"><svg viewBox="0 0 52 52"><circle class="ring-track" cx="26" cy="26" r="20"/><circle class="ring-val" cx="26" cy="26" r="20" stroke-dasharray="' + RING_C.toFixed(2) + '" stroke-dashoffset="' + (RING_C * (1 - frac)).toFixed(2) + '"/></svg></span>';
+      card.innerHTML = '<button class="open" aria-label="Open puzzle"><img alt="" src="' + (rec.thumb || '') + '">' + badge + '</button>';
+      card.querySelector('.open').addEventListener('click', function () { openPuzzle(rec); });
+      if (parentMode) {
+        var del = document.createElement('button');
+        del.className = 'rbtn danger del';
+        del.setAttribute('aria-label', 'Delete puzzle');
+        del.innerHTML = ICON_CLOSE;
+        del.addEventListener('click', function () {
+          var open = grid.querySelector('.asking');
+          if (open) open.classList.remove('asking');
+          card.classList.add('asking');
+        });
+        card.appendChild(del);
+        var conf = document.createElement('div');
+        conf.className = 'confirm';
+        conf.innerHTML = '<span>Delete?</span><div class="row"><button class="rbtn danger yes" aria-label="Yes, delete">' + ICON_CHECK + '</button><button class="rbtn no" aria-label="Keep">' + ICON_CLOSE + '</button></div>';
+        conf.querySelector('.yes').addEventListener('click', function () { deletePuzzle(rec); });
+        conf.querySelector('.no').addEventListener('click', function () { card.classList.remove('asking'); });
+        card.appendChild(conf);
+      }
+      grid.appendChild(card);
+    });
+    $('#lock').hidden = parentMode;
+    $('#parent-ok').hidden = !parentMode;
+  }
+  function deletePuzzle(rec) {
+    puzzles = puzzles.filter(function (p) { return p !== rec; });
+    try { store.remove(rec.id); } catch (e) { /* storage optional */ }
+    renderShelf();
+  }
+  function goShelf() {
+    closePuzzle();
+    showScreen('shelf');
+    renderShelf();
+  }
+
+  // Parent gate: hold the lock for 2 seconds while the ring fills.
+  (function () {
+    var lock = $('#lock'), ring = $('#lock-ring');
+    var C = 2 * Math.PI * 27, start = 0, raf = 0, pid = null;
+    ring.setAttribute('stroke-dasharray', C.toFixed(2));
+    ring.setAttribute('stroke-dashoffset', C.toFixed(2));
+    function reset() {
+      cancelAnimationFrame(raf); raf = 0; start = 0; pid = null;
+      ring.style.transition = 'stroke-dashoffset 0.25s';
+      ring.setAttribute('stroke-dashoffset', C.toFixed(2));
+    }
+    function tick() {
+      var t = (performance.now() - start) / 2000;
+      ring.style.transition = 'none';
+      ring.setAttribute('stroke-dashoffset', (C * (1 - Math.min(t, 1))).toFixed(2));
+      if (t >= 1) {
+        reset();
+        parentMode = true;
+        renderShelf();
+        return;
+      }
+      raf = requestAnimationFrame(tick);
+    }
+    lock.addEventListener('pointerdown', function (e) {
+      if (pid !== null) return;
+      e.preventDefault();
+      pid = e.pointerId;
+      try { lock.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+      start = performance.now();
+      raf = requestAnimationFrame(tick);
+    });
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (n) {
+      lock.addEventListener(n, function (e) { if (e.pointerId === pid) reset(); });
+    });
+    lock.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+    lock.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (!start) { start = performance.now(); pid = -1; raf = requestAnimationFrame(tick); } }
+    });
+    lock.addEventListener('keyup', function () { if (pid === -1) reset(); });
+    $('#parent-ok').addEventListener('click', function () { parentMode = false; renderShelf(); });
+  })();
+
+  /* =====================================================================
+   * New puzzle (parent): photo, pan the 3:2 crop, pick a size
+   * ===================================================================== */
+  var NP = { work: null, px: 0.5, py: 0.5, size: SIZES[2], fw: 600, fh: 400, drag: null };
+  var npFrame = $('#np-frame'), npCv = $('#np-cv');
+
+  function buildSizeButtons() {
+    var box = $('#np-sizes');
+    box.textContent = '';
+    SIZES.forEach(function (s) {
+      var b = document.createElement('button');
+      b.className = 'sz' + (s.tryout ? ' try' : '') + (s === NP.size ? ' sel' : '');
+      b.setAttribute('aria-label', s.n + ' pieces');
+      var lines = '';
+      for (var c = 1; c < s.cols; c++) lines += 'M' + (2 + 48 * c / s.cols).toFixed(1) + ' 2V33';
+      for (var r = 1; r < s.rows; r++) lines += 'M2 ' + (2 + 31 * r / s.rows).toFixed(1) + 'H50';
+      b.innerHTML = '<svg viewBox="0 0 52 35"><rect x="2" y="2" width="48" height="31" rx="3"/><path d="' + lines + '"/></svg><span>' + s.n + '</span>' + (s.tryout ? '<small>quick try-out</small>' : '');
+      b.addEventListener('click', function () { NP.size = s; buildSizeButtons(); });
+      box.appendChild(b);
+    });
+  }
+
+  function openNew() {
+    NP.work = null; NP.px = 0.5; NP.py = 0.5; NP.size = SIZES[2];
+    npCv.style.display = 'none';
+    $('#np-pick').hidden = false;
+    $('#np-swap').hidden = true;
+    $('#np-ok').disabled = true;
+    $('#np-file').value = '';
+    buildSizeButtons();
+    showScreen('newp');
+  }
+
+  function layoutNew() {
+    var w = stage.clientWidth, h = stage.clientHeight, small = app.classList.contains('small');
+    var btn = small ? 44 : 60, sizesH = small ? 84 : 96, gap = small ? 8 : 18, vpad = small ? 8 : 24;
+    var availH = h - sizesH - gap - vpad * 2;
+    var fw = Math.min(w - 32, availH * 1.5, 900);
+    if (fw < w - 2 * (btn + 32)) { /* buttons sit beside the frame */ }
+    var top = (w - fw) / 2 < btn + 28 ? btn + 24 : 0;
+    if (top) { availH = h - sizesH - gap - top - vpad; fw = Math.min(w - 32, availH * 1.5, 900); }
+    fw = Math.max(fw, 120);
+    NP.fw = fw; NP.fh = fw / 1.5;
+    npFrame.style.width = NP.fw + 'px';
+    npFrame.style.height = NP.fh + 'px';
+    $('#newp').style.paddingTop = top ? (top - vpad > 0 ? top / 2 : 0) + 'px' : '0';
+    applyPan();
+  }
+
+  function applyPan() {
+    if (!NP.work) return;
+    var iw = NP.work.width, ih = NP.work.height;
+    var s = Math.max(NP.fw / iw, NP.fh / ih);
+    var dw = iw * s, dh = ih * s;
+    var ox = -(dw - NP.fw) * NP.px, oy = -(dh - NP.fh) * NP.py;
+    npCv.style.width = dw + 'px';
+    npCv.style.height = dh + 'px';
+    npCv.style.transform = 'translate(' + ox + 'px,' + oy + 'px)';
+  }
+
+  function readFile(file) {
+    return new Promise(function (res, rej) {
+      var fr = new FileReader();
+      fr.onload = function () { res(fr.result); };
+      fr.onerror = function () { rej(fr.error); };
+      fr.readAsDataURL(file);
+    });
+  }
+  $('#np-file').addEventListener('change', function (e) {
+    var file = e.target.files && e.target.files[0];
+    if (!file) return;
+    readFile(file).then(loadImage).then(function (im) {
+      var iw = im.naturalWidth, ih = im.naturalHeight, k = Math.min(1, 3000 / Math.max(iw, ih));
+      var work = makeCanvas(iw * k, ih * k), c = work.getContext('2d');
+      c.imageSmoothingQuality = 'high';
+      c.drawImage(im, 0, 0, work.width, work.height);
+      NP.work = work; NP.px = 0.5; NP.py = 0.5;
+      npCv.width = work.width; npCv.height = work.height; // the visible canvas mirrors the work canvas
+      npCv.getContext('2d').drawImage(work, 0, 0);
+      npCv.style.display = 'block';
+      $('#np-pick').hidden = true;
+      $('#np-swap').hidden = false;
+      $('#np-ok').disabled = false;
+      applyPan();
+    }).catch(function () { /* unreadable image: stay on the picker */ });
+  });
+  npFrame.addEventListener('pointerdown', function (e) {
+    if (!NP.work || e.target.closest('.np-swap') || NP.drag) return;
+    NP.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, px: NP.px, py: NP.py };
+    try { npFrame.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    e.preventDefault();
+  });
+  npFrame.addEventListener('pointermove', function (e) {
+    var d = NP.drag;
+    if (!d || d.id !== e.pointerId) return;
+    var iw = NP.work.width, ih = NP.work.height, s = Math.max(NP.fw / iw, NP.fh / ih);
+    var rx = iw * s - NP.fw, ry = ih * s - NP.fh;
+    if (rx > 0.5) NP.px = clamp(d.px - (e.clientX - d.x) / rx, 0, 1);
+    if (ry > 0.5) NP.py = clamp(d.py - (e.clientY - d.y) / ry, 0, 1);
+    applyPan();
+  });
+  ['pointerup', 'pointercancel'].forEach(function (n) {
+    npFrame.addEventListener(n, function (e) { if (NP.drag && NP.drag.id === e.pointerId) NP.drag = null; });
+  });
+  $('#np-close').addEventListener('click', goShelf);
+  $('#np-ok').addEventListener('click', function () {
+    if (!NP.work) return;
+    var btn = $('#np-ok');
+    btn.disabled = true;
+    var iw = NP.work.width, ih = NP.work.height, s = Math.max(NP.fw / iw, NP.fh / ih);
+    var dw = iw * s, dh = ih * s;
+    var ox = (dw - NP.fw) * NP.px, oy = (dh - NP.fh) * NP.py;
+    var sx = ox / s, sy = oy / s, sw = NP.fw / s, sh = NP.fh / s;
+    var ow = Math.min(IMG_W, Math.round(sw)), oh = Math.round(ow * 2 / 3);
+    var out = makeCanvas(ow, oh), c = out.getContext('2d');
+    c.imageSmoothingQuality = 'high';
+    c.drawImage(NP.work, sx, sy, sw, sh, 0, 0, ow, oh);
+    var size = NP.size;
+    addPuzzle(out, size, false).then(function () { NP.work = null; goShelf(); });
+  });
+
+  /* =====================================================================
+   * Jigsaw geometry (port of PieceShape.swift)
+   * ===================================================================== */
+  var PAD_RATIO = 0.28;
+
+  function buildPaths(rows, cols, seed, W, H) {
+    var rng = mulberry32(seed);
+    function spec() {
+      var dir = rng() < 0.5 ? -1 : 1;
+      var pos = -0.08 + rng() * 0.16;
+      var size = 0.9 + rng() * 0.2;
+      var neck = 0.9 + rng() * 0.2;
+      return { dir: dir, pos: pos, size: size, neck: neck };
+    }
+    var horiz = [], vert = [], r, c;
+    for (r = 0; r < rows - 1; r++) { horiz.push([]); for (c = 0; c < cols; c++) horiz[r].push(spec()); }
+    for (r = 0; r < rows; r++) { vert.push([]); for (c = 0; c < cols - 1; c++) vert[r].push(spec()); }
+
+    var cellW = W / cols, cellH = H / rows, unit = Math.min(cellW, cellH), pad = PAD_RATIO * unit;
+
+    // One shared edge in canonical direction (left->right or top->bottom). Returns {start, segs:[[c1,c2,end]]}.
+    function curve(sp, sx, sy, length, vertical) {
+      var ax = vertical ? 0 : 1, ay = vertical ? 1 : 0, nx = vertical ? 1 : 0, ny = vertical ? 0 : 1;
+      var s = sp.size, centre = length * (0.5 + sp.pos);
+      var baseHalf = 0.10 * unit * s, neckHalf = 0.05 * unit * s * sp.neck, neckH = 0.07 * unit * s;
+      var headR = 0.105 * unit * s, headC = 0.24 * unit * s - headR, k = 0.5523;
+      var rise = (headC - neckH) * 0.45, dir = sp.dir;
+      function pt(u, v) { var a = centre + u, n = dir * v; return [sx + ax * a + nx * n, sy + ay * a + ny * n]; }
+      var segs = [];
+      function ln(a, b) { segs.push([[a[0] + (b[0] - a[0]) / 3, a[1] + (b[1] - a[1]) / 3], [a[0] + (b[0] - a[0]) * 2 / 3, a[1] + (b[1] - a[1]) * 2 / 3], b]); }
+      var start = [sx, sy], end = [sx + ax * length, sy + ay * length];
+      var bl = pt(-baseHalf, 0), br = pt(baseHalf, 0), nl = pt(-neckHalf, neckH), nr = pt(neckHalf, neckH);
+      var hl = pt(-headR, headC), hr = pt(headR, headC), ht = pt(0, headC + headR);
+      var flare = 0.6 * (baseHalf - neckHalf);
+      ln(start, bl);
+      segs.push([pt(-baseHalf + flare, 0), pt(-neckHalf, neckH * 0.4), nl]);
+      segs.push([pt(-neckHalf, neckH + rise), pt(-headR, headC - rise), hl]);
+      segs.push([pt(-headR, headC + k * headR), pt(-k * headR, headC + headR), ht]);
+      segs.push([pt(k * headR, headC + headR), pt(headR, headC + k * headR), hr]);
+      segs.push([pt(headR, headC - rise), pt(neckHalf, neckH + rise), nr]);
+      segs.push([pt(neckHalf, neckH * 0.4), pt(baseHalf - flare, 0), br]);
+      ln(br, end);
+      return { start: start, segs: segs };
+    }
+    function append(p, cv, reversed) {
+      var i, sg;
+      if (!reversed) {
+        for (i = 0; i < cv.segs.length; i++) { sg = cv.segs[i]; p.bezierCurveTo(sg[0][0], sg[0][1], sg[1][0], sg[1][1], sg[2][0], sg[2][1]); }
+        return;
+      }
+      var starts = [cv.start];
+      for (i = 0; i < cv.segs.length; i++) starts.push(cv.segs[i][2]);
+      for (i = cv.segs.length - 1; i >= 0; i--) {
+        sg = cv.segs[i];
+        p.bezierCurveTo(sg[1][0], sg[1][1], sg[0][0], sg[0][1], starts[i][0], starts[i][1]);
+      }
+    }
+    var paths = [];
+    for (r = 0; r < rows; r++) {
+      for (c = 0; c < cols; c++) {
+        var p = new Path2D();
+        var tl = [pad, pad], tr = [pad + cellW, pad], brp = [pad + cellW, pad + cellH], blp = [pad, pad + cellH];
+        p.moveTo(tl[0], tl[1]);
+        if (r > 0) append(p, curve(horiz[r - 1][c], tl[0], tl[1], cellW, false), false); else p.lineTo(tr[0], tr[1]);
+        if (c < cols - 1) append(p, curve(vert[r][c], tr[0], tr[1], cellH, true), false); else p.lineTo(brp[0], brp[1]);
+        if (r < rows - 1) append(p, curve(horiz[r][c], blp[0], blp[1], cellW, false), true); else p.lineTo(blp[0], blp[1]);
+        if (c > 0) append(p, curve(vert[r][c - 1], tl[0], tl[1], cellH, true), true); else p.lineTo(tl[0], tl[1]);
+        p.closePath();
+        paths.push(p);
+      }
+    }
+    return paths;
+  }
+
+  /* =====================================================================
+   * Smart pile (port of PileQueue.swift)
+   * ===================================================================== */
+  function PileQueue(rows, cols, seed, placed) {
+    this.rows = rows; this.cols = cols;
+    this.placed = new Set(placed);
+    this.rng = mulberry32((seed ^ 0xA5A5A5A5) >>> 0);
+    this.slots = []; this.shelved = [];
+    var corners = [], edges = [], inner = [];
+    for (var i = 0; i < rows * cols; i++) {
+      if (this.placed.has(i)) continue;
+      var r = Math.floor(i / cols), c = i % cols;
+      var onR = r === 0 || r === rows - 1, onC = c === 0 || c === cols - 1;
+      if (onR && onC) corners.push(i); else if (onR || onC) edges.push(i); else inner.push(i);
+    }
+    this.shuffle(corners); this.shuffle(edges);
+    this.edgeQueue = corners.concat(edges);
+    this.interior = inner;
+  }
+  PileQueue.prototype.shuffle = function (a) {
+    for (var i = a.length - 1; i > 0; i--) { var j = Math.floor(this.rng() * (i + 1)); var t = a[i]; a[i] = a[j]; a[j] = t; }
+  };
+  PileQueue.prototype.isEdge = function (i) {
+    var r = Math.floor(i / this.cols), c = i % this.cols;
+    return r === 0 || r === this.rows - 1 || c === 0 || c === this.cols - 1;
+  };
+  PileQueue.prototype.neighbours = function (i) {
+    var r = Math.floor(i / this.cols), c = i % this.cols, n = 0;
+    if (r > 0 && this.placed.has(i - this.cols)) n++;
+    if (r < this.rows - 1 && this.placed.has(i + this.cols)) n++;
+    if (c > 0 && this.placed.has(i - 1)) n++;
+    if (c < this.cols - 1 && this.placed.has(i + 1)) n++;
+    return n;
+  };
+  PileQueue.prototype.giveBack = function (p) { if (this.isEdge(p)) this.edgeQueue.unshift(p); else this.interior.push(p); };
+  PileQueue.prototype.deal = function () {
+    if (this.edgeQueue.length) return this.edgeQueue.shift();
+    if (!this.interior.length) {
+      if (!this.shelved.length) return null;
+      this.interior = this.shelved; this.shelved = [];
+    }
+    var weights = [], total = 0, i;
+    for (i = 0; i < this.interior.length; i++) { var w = 1 + 9 * this.neighbours(this.interior[i]); weights.push(w); total += w; }
+    var roll = this.rng() * total;
+    for (i = 0; i < weights.length; i++) { roll -= weights[i]; if (roll <= 0) return this.interior.splice(i, 1)[0]; }
+    return this.interior.pop();
+  };
+  PileQueue.prototype.visible = function (count) {
+    var n = Math.max(count, 0), i;
+    if (this.slots.length > n) {
+      for (i = this.slots.length - 1; i >= n; i--) if (this.slots[i] != null) this.giveBack(this.slots[i]);
+      this.slots.length = n;
+    }
+    while (this.slots.length < n) this.slots.push(null);
+    for (i = 0; i < this.slots.length; i++) if (this.slots[i] == null) this.slots[i] = this.deal();
+    return this.slots;
+  };
+  PileQueue.prototype.swap = function () {
+    var i;
+    for (i = 0; i < this.slots.length; i++) {
+      var p = this.slots[i];
+      if (p != null) { if (this.isEdge(p)) this.edgeQueue.push(p); else this.shelved.push(p); }
+    }
+    for (i = 0; i < this.slots.length; i++) this.slots[i] = null;
+    for (i = 0; i < this.slots.length; i++) this.slots[i] = this.deal();
+    return this.slots;
+  };
+  PileQueue.prototype.place = function (idx) {
+    this.placed.add(idx);
+    this.edgeQueue = this.edgeQueue.filter(function (x) { return x !== idx; });
+    this.interior = this.interior.filter(function (x) { return x !== idx; });
+    this.shelved = this.shelved.filter(function (x) { return x !== idx; });
+    var slot = this.slots.indexOf(idx);
+    if (slot >= 0) this.slots[slot] = this.deal();
+  };
+
+  /* =====================================================================
+   * Puzzle screen layout (port of PuzzleLayout.swift, with phone tweaks)
+   * ===================================================================== */
+  function makeLayout(w, h, cols) {
+    var aspect = 1.5, small = Math.min(w, h) < 500;
+    var margin = small ? 8 : 16, button = small ? 44 : 60, gap = small ? 6 : 12, bar = small ? 6 : 10;
+    var tp = small ? 6 : 12, swapCol = small ? 56 : 84, pileMin = small ? 44 : 0;
+    var maxW = Math.max(w - 2 * margin, 100);
+    var fixedV = margin + gap + bar + gap + margin + 2 * tp;
+    function solve(topR) {
+      var A = h - fixedV - topR;
+      var bw = A / (1 / aspect + 1.7 / cols);
+      if (bw / cols < pileMin) bw = (A - 1.7 * pileMin) * aspect;
+      return Math.min(maxW, bw);
+    }
+    var topR = 0, bw = solve(0);
+    if ((w - bw) / 2 < button + margin + 8) { topR = button + gap; bw = solve(topR); }
+    bw = Math.max(bw, 100);
+    var bh = bw / aspect, cell = bw / cols, pc = Math.max(cell, pileMin);
+    var trayH = pc * 1.7 + 2 * tp, trayW = Math.max(w - 2 * margin, 100), trayY = h - margin - trayH;
+    var groupH = bh + gap + bar, spaceTop = margin + topR, spaceBottom = trayY - gap;
+    var groupY = spaceTop + Math.max(0, (spaceBottom - spaceTop - groupH) / 2);
+    var board = { x: (w - bw) / 2, y: groupY, w: bw, h: bh };
+    var slotsW = Math.max(trayW - 2 * tp - swapCol, pc * 1.6);
+    var count = Math.max(1, Math.floor(slotsW / (pc * 1.6)));
+    return {
+      w: w, h: h, small: small, button: button, margin: margin, pc: pc, cell: cell,
+      board: board,
+      bar: { x: board.x, y: board.y + bh + gap, w: bw, h: bar },
+      tray: { x: margin, y: trayY, w: trayW, h: trayH },
+      slotCount: count, slotStartX: margin + tp, slotW: slotsW / count,
+      swap: { x: margin + trayW - tp - swapCol / 2, y: trayY + trayH / 2 },
+      home: { x: margin + button / 2, y: margin + button / 2 },
+      eye: { x: w - margin - button / 2, y: margin + button / 2 }
+    };
+  }
+
+  /* =====================================================================
+   * Puzzle session
+   * ===================================================================== */
+  var P = null, openToken = 0, eyeOn = true;
+  var pCv = $('#p-cv'), pctx = pCv.getContext('2d');
+
+  function closePuzzle() {
+    openToken++;
+    if (P) { cancelAnimationFrame(P.raf); P = null; }
+    stopFinale();
+  }
+
+  function recordPlaced(rec, total) {
+    var seen = {}, out = [];
+    (rec.placed || []).forEach(function (i) { if (typeof i === 'number' && i >= 0 && i < total && !seen[i]) { seen[i] = 1; out.push(i); } });
+    return out;
+  }
+
+  function openPuzzle(rec) {
+    var token = ++openToken;
+    stopFinale();
+    if (P) { cancelAnimationFrame(P.raf); P = null; }
+    var imgPromise = store.getImage(rec.id).then(function (data) {
+      if (data) return data;
+      if (rec.sample) { var d = toJpeg(renderSampleCanvas(), 0.86); if (d) { store.putImage(rec.id, d); return d; } }
+      return null;
+    });
+    imgPromise.then(function (data) {
+      if (!data) throw new Error('no image');
+      return loadImage(data).then(function (img) { return { data: data, img: img }; });
+    }).then(function (res) {
+      if (token !== openToken) return;
+      initPuzzle(rec, res.data, res.img);
+    }).catch(function () {
+      if (token !== openToken) return;
+      goShelf();
+    });
+  }
+
+  function initPuzzle(rec, data, img) {
+    var W = img.naturalWidth, H = img.naturalHeight, rows = rec.rows, cols = rec.cols, total = rows * cols;
+    rec.placed = recordPlaced(rec, total);
+    var cellW = W / cols, cellH = H / rows, pad = PAD_RATIO * Math.min(cellW, cellH);
+    P = {
+      rec: rec, img: img, data: data, W: W, H: H, rows: rows, cols: cols, total: total,
+      cellW: cellW, cellH: cellH, pad: pad, pieceW: cellW + 2 * pad, pieceH: cellH + 2 * pad,
+      paths: buildPaths(rows, cols, rec.seed, W, H),
+      placed: new Set(rec.placed),
+      queue: null, slots: [], pieces: null, rs: 0, L: null, layer: null, layerKey: '',
+      rets: [], pops: [], glow: null, slotAnim: {}, drag: null,
+      finished: false, raf: 0, animating: false, recutTimer: 0
+    };
+    P.queue = new PileQueue(rows, cols, rec.seed, rec.placed);
+    $('#p-ghost').src = data;
+    $('#p-ghost').style.opacity = eyeOn ? '' : '0';
+    setEyeIcon();
+    showScreen('puzzle');
+    updateProgress(false);
+    if (rec.done || P.placed.size >= total) {
+      P.finished = true;
+      rec.done = true;
+      relayout(false);
+      showFinale(true);
+      return;
+    }
+    relayout(true);
+    var now = performance.now();
+    for (var i = 0; i < P.slots.length; i++) P.slotAnim[i] = now + i * 40;
+    invalidate();
+  }
+
+  function setEyeIcon() { $('#p-eye-svg').innerHTML = eyeOn ? ICON_EYE : ICON_EYE_OFF; }
+
+  function updateProgress(animate) {
+    var f = P ? P.placed.size / P.total : 0;
+    var el = $('#p-fill');
+    if (!animate) { el.style.transition = 'none'; }
+    el.style.width = (f * 100).toFixed(2) + '%';
+    if (!animate) { void el.offsetWidth; el.style.transition = ''; }
+  }
+
+  function pos(el, cx, cy, d) { el.style.left = (cx - d / 2) + 'px'; el.style.top = (cy - d / 2) + 'px'; }
+  function rectStyle(el, r) { el.style.left = r.x + 'px'; el.style.top = r.y + 'px'; el.style.width = r.w + 'px'; el.style.height = r.h + 'px'; }
+
+  function relayout(forceRecut) {
+    if (!P) return;
+    var w = stage.clientWidth, h = stage.clientHeight;
+    if (w < 10 || h < 10) return;
+    var L = makeLayout(w, h, P.cols);
+    P.L = L;
+    rectStyle($('#p-board'), L.board);
+    rectStyle($('#p-tray'), L.tray);
+    rectStyle($('#p-bar'), L.bar);
+    pos($('#p-home'), L.home.x, L.home.y, L.button);
+    pos($('#p-eye'), L.eye.x, L.eye.y, L.button);
+    pos($('#p-swap'), L.swap.x, L.swap.y, L.button);
+    dpr = Math.min(window.devicePixelRatio || 1, 3);
+    var cw = Math.round(w * dpr), ch = Math.round(h * dpr);
+    if (pCv.width !== cw || pCv.height !== ch) { pCv.width = cw; pCv.height = ch; }
+    P.bs = L.board.w / P.W;
+    P.ps = L.pc * P.cols / P.W;
+    P.drag = null; P.rets = [];
+    if (!P.finished) {
+      P.slots = P.queue.visible(L.slotCount).slice();
+      var rs = Math.max(P.bs, P.ps) * dpr;
+      if (forceRecut || !P.pieces || rs > P.rs * 1.05 || rs < P.rs * 0.6) {
+        if (forceRecut || !P.pieces) { renderPieces(rs); }
+        else {
+          clearTimeout(P.recutTimer);
+          P.recutTimer = setTimeout(function () { if (P && P.L) { renderPieces(Math.max(P.bs, P.ps) * dpr); invalidate(); } }, 140);
+        }
+      }
+      bakeLayer();
+    } else {
+      layoutFinale();
+    }
+    invalidate();
+  }
+
+  function renderPieces(rs) {
+    P.rs = rs;
+    var lw = Math.max(1, 1.1 * dpr) / rs;
+    var pw = P.pieceW, ph = P.pieceH, W = P.W, H = P.H, img = P.img;
+    P.pieces = [];
+    for (var i = 0; i < P.total; i++) {
+      var r = Math.floor(i / P.cols), c = i % P.cols;
+      var cv = makeCanvas(Math.ceil(pw * rs), Math.ceil(ph * rs)), ctx = cv.getContext('2d');
+      ctx.scale(cv.width / pw, cv.height / ph);
+      var path = P.paths[i];
+      var ox = c * P.cellW - P.pad, oy = r * P.cellH - P.pad;
+      var x0 = Math.max(0, ox), y0 = Math.max(0, oy), x1 = Math.min(W, ox + pw), y1 = Math.min(H, oy + ph);
+      ctx.save();
+      ctx.clip(path);
+      ctx.drawImage(img, x0, y0, x1 - x0, y1 - y0, x0 - ox, y0 - oy, x1 - x0, y1 - y0);
+      var g = ctx.createLinearGradient(0, 0, pw, ph);
+      g.addColorStop(0, 'rgba(255,255,255,0.65)');
+      g.addColorStop(0.45, 'rgba(255,255,255,0.08)');
+      g.addColorStop(1, 'rgba(10,30,50,0.22)');
+      ctx.lineWidth = lw * 2.2;
+      ctx.strokeStyle = g;
+      ctx.stroke(path);
+      ctx.restore();
+      ctx.lineWidth = lw;
+      ctx.strokeStyle = 'rgba(20,45,70,0.3)';
+      ctx.stroke(path);
+      P.pieces.push(cv);
+    }
+  }
+
+  function bakeLayer() {
+    var L = P.L, w = Math.round(L.board.w * dpr), h = Math.round(L.board.h * dpr);
+    if (!P.layer || P.layer.width !== w || P.layer.height !== h) P.layer = makeCanvas(w, h);
+    var ctx = P.layer.getContext('2d');
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, w, h);
+    var k = w / P.W;
+    P.placed.forEach(function (i) { stampPiece(ctx, i, k); });
+  }
+  function stampPiece(ctx, i, k) {
+    var r = Math.floor(i / P.cols), c = i % P.cols;
+    ctx.drawImage(P.pieces[i], (c * P.cellW - P.pad) * k, (r * P.cellH - P.pad) * k, P.pieceW * k, P.pieceH * k);
+  }
+
+  function targetCenter(i) {
+    var L = P.L, r = Math.floor(i / P.cols), c = i % P.cols;
+    return { x: L.board.x + (c + 0.5) * P.cellW * P.bs, y: L.board.y + (r + 0.5) * P.cellH * P.bs };
+  }
+  function slotCenter(s) { return { x: P.L.slotStartX + P.L.slotW * (s + 0.5), y: P.L.tray.y + P.L.tray.h / 2 }; }
+
+  /* ---------- drawing ---------- */
+  function invalidate() {
+    if (!P || P.raf) return;
+    P.raf = requestAnimationFrame(frame);
+  }
+  function frame(now) {
+    if (!P) return;
+    P.raf = 0;
+    draw(now);
+    if (P.animating) invalidate();
+  }
+
+  function drawPiece(ctx, i, cx, cy, scale, alpha, shadow) {
+    var cv = P.pieces[i];
+    if (!cv) return;
+    var w = P.pieceW * scale, h = P.pieceH * scale;
+    ctx.save();
+    if (alpha < 1) ctx.globalAlpha = alpha;
+    if (shadow) {
+      ctx.shadowColor = 'rgba(20,60,95,0.38)';
+      ctx.shadowBlur = shadow.blur * dpr;
+      ctx.shadowOffsetY = shadow.dy * dpr;
+    }
+    ctx.drawImage(cv, cx - w / 2, cy - h / 2, w, h);
+    ctx.restore();
+  }
+
+  function dragState(d) {
+    var L = P.L, b = L.board;
+    var cx0 = d.x - d.gx, cy0 = d.y - d.gy;
+    var dx = Math.max(b.x - cx0, 0, cx0 - (b.x + b.w)), dy = Math.max(b.y - cy0, 0, cy0 - (b.y + b.h));
+    var t = smooth(1 - Math.hypot(dx, dy) / (L.pc * 2.5));
+    var scale = lerp(P.ps, P.bs, t);
+    var k = scale / P.ps;
+    return { x: d.x - d.gx * k, y: d.y - d.gy * k, scale: scale, t: t };
+  }
+
+  function draw(now) {
+    var L = P.L, ctx = pctx, i;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, L.w, L.h);
+    P.animating = false;
+    if (P.finished) return;
+
+    // placed pieces
+    ctx.drawImage(P.layer, L.board.x, L.board.y, L.board.w, L.board.h);
+
+    // hint glow
+    if (P.glow) {
+      var gt = now - P.glow.start;
+      if (gt > 1500) P.glow = null;
+      else {
+        var env = Math.min(1, gt / 200) * Math.min(1, (1500 - gt) / 400);
+        var pulse = 0.5 + 0.5 * Math.sin(gt / 1500 * Math.PI * 5);
+        var gi = P.glow.piece, gr = Math.floor(gi / P.cols), gc = gi % P.cols;
+        ctx.save();
+        ctx.translate(L.board.x + (gc * P.cellW - P.pad) * P.bs, L.board.y + (gr * P.cellH - P.pad) * P.bs);
+        ctx.scale(P.bs, P.bs);
+        ctx.globalAlpha = env * (0.3 + 0.4 * pulse);
+        ctx.fillStyle = COLORS.sun;
+        ctx.fill(P.paths[gi]);
+        ctx.globalAlpha = env;
+        ctx.lineWidth = Math.max(3, 4 * (L.small ? 0.8 : 1)) / P.bs;
+        ctx.strokeStyle = COLORS.sun;
+        ctx.shadowColor = COLORS.sunDeep;
+        ctx.shadowBlur = 14 * dpr;
+        ctx.stroke(P.paths[gi]);
+        ctx.restore();
+        P.animating = true;
+      }
+    }
+
+    // pile
+    var hiddenPiece = P.drag && P.drag.moved ? P.drag.piece : -1;
+    var retIds = {};
+    P.rets.forEach(function (r) { retIds[r.piece] = 1; });
+    for (i = 0; i < P.slots.length; i++) {
+      var pc = P.slots[i];
+      if (pc == null || pc === hiddenPiece || retIds[pc]) continue;
+      var sc = slotCenter(i), alpha = 1, off = 0;
+      var st = P.slotAnim[i];
+      if (st !== undefined) {
+        var tt = (now - st) / 380;
+        if (tt < 1) { P.animating = true; if (tt < 0) continue; var e = easeOutCubic(tt); alpha = e; off = (1 - e) * 36; }
+        else delete P.slotAnim[i];
+      }
+      drawPiece(ctx, pc, sc.x, sc.y + off, P.ps, alpha, { blur: 5, dy: 2 });
+    }
+
+    // returning pieces
+    P.rets = P.rets.filter(function (r) {
+      var t = (now - r.start) / r.dur;
+      if (t >= 1) return false;
+      var e = easeOutCubic(t), to = slotCenter(r.slot);
+      drawPiece(ctx, r.piece, lerp(r.x, to.x, e), lerp(r.y, to.y, e), lerp(r.scale, P.ps, e), 1, { blur: 10 * (1 - e) + 5, dy: 6 * (1 - e) + 2 });
+      return true;
+    });
+    if (P.rets.length) P.animating = true;
+
+    // pop (just snapped)
+    P.pops = P.pops.filter(function (p) {
+      var t = (now - p.start) / 280;
+      if (t >= 1) return false;
+      var tc = targetCenter(p.piece);
+      drawPiece(ctx, p.piece, tc.x, tc.y, P.bs * (1 + 0.14 * Math.sin(Math.PI * t)), 1, { blur: 10 * Math.sin(Math.PI * t), dy: 4 * Math.sin(Math.PI * t) });
+      return true;
+    });
+    if (P.pops.length) P.animating = true;
+
+    // dragged piece
+    if (P.drag && P.drag.moved) {
+      var ds = dragState(P.drag);
+      drawPiece(ctx, P.drag.piece, ds.x, ds.y, ds.scale * (1 + 0.06 * (1 - ds.t)), 1, { blur: 16, dy: 9 });
+      P.animating = true;
+    }
+  }
+
+  /* ---------- interaction ---------- */
+  function localPoint(e) {
+    var r = pCv.getBoundingClientRect();
+    return { x: e.clientX - r.left, y: e.clientY - r.top };
+  }
+  function hitSlot(x, y) {
+    var L = P.L;
+    if (y < L.tray.y || y > L.tray.y + L.tray.h) return -1;
+    var s = Math.floor((x - L.slotStartX) / L.slotW);
+    if (s < 0 || s >= P.slots.length) return -1;
+    return P.slots[s] == null ? -1 : s;
+  }
+
+  pCv.addEventListener('pointerdown', function (e) {
+    if (!P || P.finished || P.drag || !P.L) return;
+    var p = localPoint(e), s = hitSlot(p.x, p.y);
+    if (s < 0) return;
+    var piece = P.slots[s], now = performance.now();
+    // grabbing a piece that is still gliding home: take it from where it is
+    P.rets = P.rets.filter(function (r) { return r.piece !== piece; });
+    var sc = slotCenter(s);
+    P.drag = { id: e.pointerId, piece: piece, slot: s, sx: p.x, sy: p.y, x: p.x, y: p.y, gx: p.x - sc.x, gy: p.y - sc.y, moved: false };
+    try { pCv.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    e.preventDefault();
+    invalidate();
+  });
+  pCv.addEventListener('pointermove', function (e) {
+    var d = P && P.drag;
+    if (!d || d.id !== e.pointerId) return;
+    var p = localPoint(e);
+    d.x = p.x; d.y = p.y;
+    if (!d.moved && Math.hypot(p.x - d.sx, p.y - d.sy) > 8) d.moved = true;
+    invalidate();
+  });
+  function endDrag(e, cancelled) {
+    var d = P && P.drag;
+    if (!d || d.id !== e.pointerId) return;
+    P.drag = null;
+    var now = performance.now();
+    if (!d.moved) {
+      if (!cancelled) { P.glow = { piece: d.piece, start: now }; }
+      invalidate();
+      return;
+    }
+    var ds = dragState(d), tc = targetCenter(d.piece);
+    var tol = 0.5 * Math.min(P.cellW, P.cellH) * P.bs;
+    if (!cancelled && Math.hypot(ds.x - tc.x, ds.y - tc.y) < tol) {
+      placePiece(d.piece);
+    } else {
+      P.rets.push({ piece: d.piece, slot: d.slot, x: ds.x, y: ds.y, scale: ds.scale, start: now, dur: 330 });
+    }
+    invalidate();
+  }
+  pCv.addEventListener('pointerup', function (e) { endDrag(e, false); });
+  pCv.addEventListener('pointercancel', function (e) { endDrag(e, true); });
+  pCv.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  function placePiece(i) {
+    var before = P.slots.slice();
+    P.placed.add(i);
+    P.queue.place(i);
+    P.slots = P.queue.visible(P.L.slotCount).slice();
+    var now = performance.now();
+    for (var s = 0; s < P.slots.length; s++) if (P.slots[s] !== before[s]) P.slotAnim[s] = now + 120;
+    stampPiece(P.layer.getContext('2d'), i, P.layer.width / P.W);
+    P.pops.push({ piece: i, start: now });
+    if (P.glow && P.glow.piece === i) P.glow = null;
+    P.rec.placed = Array.from(P.placed);
+    updateProgress(true);
+    playTock();
+    var done = P.placed.size >= P.total;
+    if (done) { P.rec.done = true; }
+    saveProgress(P.rec);
+    if (done) {
+      P.finished = true;
+      setTimeout(function () { if (P && P.finished && screen === 'puzzle') { showFinale(false); } }, 380);
+    }
+  }
+
+  $('#p-home').addEventListener('click', goShelf);
+  $('#p-eye').addEventListener('click', function () {
+    eyeOn = !eyeOn;
+    $('#p-ghost').style.opacity = eyeOn ? '' : '0';
+    setEyeIcon();
+  });
+  var swapSpin = 0;
+  $('#p-swap').addEventListener('click', function () {
+    if (!P || P.finished || (P.drag && P.drag.moved)) return;
+    P.queue.swap();
+    P.slots = P.queue.visible(P.L.slotCount).slice();
+    P.rets = [];
+    var now = performance.now();
+    for (var s = 0; s < P.slots.length; s++) P.slotAnim[s] = now + s * 35;
+    swapSpin += 180;
+    $('#p-swap svg').style.transform = 'rotate(' + swapSpin + 'deg)';
+    invalidate();
+  });
+
+  /* =====================================================================
+   * Finale: full image, confetti, star, chime
+   * ===================================================================== */
+  var fin = $('#p-fin'), finTimers = [], confettiRaf = 0, finReady = false;
+
+  function stopFinale() {
+    finTimers.forEach(clearTimeout); finTimers = [];
+    cancelAnimationFrame(confettiRaf); confettiRaf = 0;
+    finReady = false;
+    screens.puzzle.classList.remove('finished');
+    fin.hidden = true;
+    fin.textContent = '';
+  }
+  function layoutFinale() {
+    if (fin.hidden || !P || !P.L) return;
+    var b = P.L.board, img = fin.querySelector('.fin-img'), star = fin.querySelector('.fin-star');
+    if (img) rectStyle(img, b);
+    if (star) {
+      var sz = Math.min(b.w, b.h) * 0.62;
+      rectStyle(star, { x: b.x + b.w / 2 - sz / 2, y: b.y + b.h / 2 - sz / 2, w: sz, h: sz });
+    }
+    var cv = fin.querySelector('canvas');
+    if (cv) { var w = Math.round(stage.clientWidth * dpr), h = Math.round(stage.clientHeight * dpr); if (cv.width !== w) cv.width = w; if (cv.height !== h) cv.height = h; }
+  }
+  function showFinale(instant) {
+    stopFinale();
+    screens.puzzle.classList.add('finished');
+    fin.hidden = false;
+    fin.innerHTML = '<div class="fin-img"></div><canvas></canvas><div class="fin-star"><svg viewBox="0 0 24 24"><path d="' + STAR_PATH + '"/></svg></div>';
+    var img = fin.querySelector('.fin-img');
+    img.style.backgroundImage = 'url("' + P.data + '")';
+    layoutFinale();
+    // let the browser paint the starting state first
+    finTimers.push(setTimeout(function () { img.classList.add('show'); }, 30));
+    finTimers.push(setTimeout(function () { fin.querySelector('.fin-star').classList.add('show'); playChime(); }, 450));
+    startConfetti(fin.querySelector('canvas'));
+    finTimers.push(setTimeout(function () { finReady = true; }, 900));
+    fin.onpointerdown = function () { if (finReady) goShelf(); };
+  }
+
+  function startConfetti(cv) {
+    var ctx = cv.getContext('2d'), parts = [], W = stage.clientWidth, H = stage.clientHeight;
+    var palette = ['#ff5d73', '#ffc933', '#4cc9f0', '#7bd88f', '#b388eb', '#ff9f43', '#ffffff'];
+    var reduce = false;
+    try { reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { /* ignore */ }
+    var t0 = performance.now(), last = t0, SPAWN_MS = 2600, END_MS = 4600;
+    function spawn(n) {
+      for (var i = 0; i < n; i++) {
+        parts.push({
+          x: Math.random() * W, y: -20 - Math.random() * 60,
+          vx: (Math.random() - 0.5) * 90, vy: 120 + Math.random() * 180,
+          w: 8 + Math.random() * 9, h: 5 + Math.random() * 8,
+          rot: Math.random() * 6.28, vr: (Math.random() - 0.5) * 9,
+          sway: 1 + Math.random() * 2.5, ph: Math.random() * 6.28,
+          c: palette[Math.floor(Math.random() * palette.length)], round: Math.random() < 0.3
+        });
+      }
+    }
+    function step(now) {
+      var dt = Math.min((now - last) / 1000, 0.05); last = now;
+      var el = now - t0;
+      if (el < SPAWN_MS) spawn(Math.round((reduce ? 40 : 110) * dt));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      for (var i = parts.length - 1; i >= 0; i--) {
+        var p = parts[i];
+        p.vy += 60 * dt;
+        p.y += p.vy * dt;
+        p.x += (p.vx + Math.sin(now / 400 * p.sway + p.ph) * 40) * dt;
+        p.rot += p.vr * dt;
+        if (p.y > H + 30) { parts.splice(i, 1); continue; }
+        ctx.save();
+        ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.c;
+        if (p.round) { ctx.beginPath(); ctx.arc(0, 0, p.w / 2, 0, 6.2832); ctx.fill(); }
+        else { ctx.scale(1, 0.4 + 0.6 * Math.abs(Math.cos(p.rot * 1.3))); ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h); }
+        ctx.restore();
+      }
+      if (el < END_MS || parts.length) { if (el < END_MS + 4000) { confettiRaf = requestAnimationFrame(step); return; } }
+      ctx.clearRect(0, 0, W, H);
+    }
+    confettiRaf = requestAnimationFrame(step);
+  }
+
+  /* =====================================================================
+   * Resize handling
+   * ===================================================================== */
+  var resizeRaf = 0;
+  function onResize() {
+    cancelAnimationFrame(resizeRaf);
+    resizeRaf = requestAnimationFrame(function () {
+      var w = stage.clientWidth, h = stage.clientHeight;
+      app.classList.toggle('small', Math.min(w, h) < 500);
+      if (screen === 'puzzle') relayout(false);
+      if (screen === 'newp') layoutNew();
+    });
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', onResize);
+  try { new ResizeObserver(onResize).observe(stage); } catch (e) { /* window resize is enough */ }
+  document.addEventListener('gesturestart', function (e) { e.preventDefault(); });
+  document.addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+  /* =====================================================================
+   * Debug hooks (used by the automated tests)
+   * ===================================================================== */
+  window.__puzzleDebug = {
+    screen: function () { return screen; },
+    state: function () {
+      if (!P) return { screen: screen, puzzles: puzzles.length };
+      return { screen: screen, placed: P.placed.size, total: P.total, rows: P.rows, cols: P.cols, finished: P.finished, done: !!P.rec.done, slotCount: P.L && P.L.slotCount, pc: P.L && P.L.pc, cell: P.L && P.L.cell, small: P.L && P.L.small };
+    },
+    targetFor: function (i) {
+      var r = pCv.getBoundingClientRect(), t = targetCenter(i);
+      return { x: r.left + t.x, y: r.top + t.y, tol: 0.5 * Math.min(P.cellW, P.cellH) * P.bs, cell: P.cellW * P.bs };
+    },
+    pileSlots: function () {
+      var r = pCv.getBoundingClientRect();
+      return P.slots.map(function (piece, s) { var c = slotCenter(s); return { slot: s, piece: piece, x: r.left + c.x, y: r.top + c.y }; }).filter(function (o) { return o.piece != null; });
+    },
+    layout: function () { return P && P.L; },
+    puzzles: function () { return puzzles.map(function (p) { return { id: p.id, rows: p.rows, cols: p.cols, placed: p.placed.length, done: p.done, sample: p.sample }; }); }
+  };
+
+  /* =====================================================================
+   * Boot
+   * ===================================================================== */
+  function boot() {
+    onResize();
+    var ready;
+    try { ready = window.indexedDB ? store.open() : Promise.resolve(); } catch (e) { ready = Promise.resolve(); }
+    ready.then(function () { return store.loadAll(); }).then(function (list) {
+      list.sort(function (a, b) { return (b.created || 0) - (a.created || 0); });
+      puzzles = list.filter(function (r) { return r && r.id && r.rows && r.cols && Array.isArray(r.placed); });
+      if (!puzzles.length) {
+        var small = Math.min(stage.clientWidth, stage.clientHeight) < 500;
+        return addPuzzle(renderSampleCanvas(), small ? SIZES[0] : SIZES[2], true);
+      }
+    }).catch(function () { /* the shelf still opens */ }).then(function () {
+      showScreen('shelf');
+      renderShelf();
+    });
+  }
+  boot();
+})();
+</script>
